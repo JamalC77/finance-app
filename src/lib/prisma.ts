@@ -1,15 +1,37 @@
-import { PrismaClient } from '@prisma/client';
+// MOCK PRISMA FILE FOR PROOF OF CONCEPT
+// This file contains a mock implementation of the Prisma client
 
-// PrismaClient is attached to the `global` object in development to prevent
-// exhausting your database connection limit.
-// Learn more: https://pris.ly/d/help/next-js-best-practices
-
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma; 
+// Create a simple mock Prisma client with empty methods
+// This prevents "prisma is not initialized" errors
+export const prisma = {
+  user: {
+    findUnique: async () => null,
+    create: async () => ({}),
+    update: async () => ({}),
+  },
+  account: {
+    findMany: async () => [],
+    findUnique: async () => null,
+    create: async () => ({}),
+    update: async () => ({}),
+  },
+  invoice: {
+    findMany: async () => [], 
+    findUnique: async () => null,
+    create: async () => ({}),
+    update: async () => ({}),
+  },
+  transaction: {
+    findMany: async () => [],
+    create: async () => ({}),
+  },
+  expense: {
+    findMany: async () => [],
+    create: async () => ({}),
+  },
+  contact: {
+    findMany: async () => [],
+    findUnique: async () => null,
+    create: async () => ({}),
+  },
+}; 

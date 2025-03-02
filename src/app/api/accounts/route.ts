@@ -1,11 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
+
+// Mock accounts data
+const mockAccounts = [
+  {
+    id: 'acc_1',
+    name: 'Checking Account',
+    type: 'asset',
+    subtype: 'bank',
+    accountNumber: '1000',
+    currentBalance: 24500.75,
+    description: 'Primary business checking account',
+    organizationId: 'org-1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'acc_2',
+    name: 'Savings Account',
+    type: 'asset',
+    subtype: 'bank',
+    accountNumber: '1001',
+    currentBalance: 15000.00,
+    description: 'Business savings account',
+    organizationId: 'org-1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'acc_3',
+    name: 'Accounts Receivable',
+    type: 'asset',
+    subtype: 'receivable',
+    accountNumber: '1100',
+    currentBalance: 8750.50,
+    description: 'Money owed by customers',
+    organizationId: 'org-1',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = getServerAuthSession();
     
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,15 +53,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const organizationId = searchParams.get('organizationId') || session.user.organizationId;
     
-    // Fetch accounts for the organization
-    const accounts = await prisma.account.findMany({
-      where: {
-        organizationId: organizationId as string,
-      },
-      orderBy: {
-        accountNumber: 'asc',
-      },
-    });
+    // Filter accounts for the organization from our mock data
+    const accounts = mockAccounts.filter(acc => acc.organizationId === organizationId);
     
     return NextResponse.json({ accounts });
   } catch (error) {
@@ -34,7 +65,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = getServerAuthSession();
     
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -48,20 +79,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
     
-    // Create new account
-    const account = await prisma.account.create({
-      data: {
-        name,
-        type,
-        subtype,
-        description,
-        accountNumber,
-        organizationId: session.user.organizationId as string,
-        currentBalance: 0, // Initialize with zero balance
-      },
-    });
+    // Create new account (mock version)
+    const newAccount = {
+      id: `acc_${Date.now()}`,
+      name,
+      type,
+      subtype,
+      description,
+      accountNumber,
+      organizationId: session.user.organizationId,
+      currentBalance: 0, // Initialize with zero balance
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
     
-    return NextResponse.json({ account }, { status: 201 });
+    // In a real implementation, we would save this to the database
+    // For our mock, we'll just return the new account
+    
+    return NextResponse.json({ account: newAccount }, { status: 201 });
   } catch (error) {
     console.error('Error creating account:', error);
     return NextResponse.json({ error: 'Failed to create account' }, { status: 500 });

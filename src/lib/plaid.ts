@@ -1,35 +1,97 @@
-import { Configuration, PlaidApi, PlaidEnvironments, CountryCode, Products } from 'plaid';
+// MOCK PLAID FILE FOR PROOF OF CONCEPT
+// This file contains mock implementations for Plaid-related functionality
 
-// Configure Plaid client
-const configuration = new Configuration({
-  basePath: PlaidEnvironments[process.env.PLAID_ENVIRONMENT || 'sandbox'],
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
-      'PLAID-SECRET': process.env.PLAID_SECRET,
-    },
-  },
-});
-
-export const plaidClient = new PlaidApi(configuration);
+// Mock Plaid client
+export const plaidClient = {
+  linkTokenCreate: async () => ({
+    data: { link_token: 'mock_link_token_123' }
+  }),
+  itemPublicTokenExchange: async () => ({
+    data: { access_token: 'mock_access_token_123', item_id: 'mock_item_id_123' }
+  }),
+  accountsGet: async () => ({
+    data: {
+      accounts: [
+        {
+          account_id: 'mock_account_1',
+          name: 'Mock Checking',
+          type: 'depository',
+          subtype: 'checking',
+          mask: '1234',
+          balances: {
+            current: 5000.25,
+            available: 4800.50,
+            limit: null
+          }
+        },
+        {
+          account_id: 'mock_account_2',
+          name: 'Mock Savings',
+          type: 'depository',
+          subtype: 'savings',
+          mask: '5678',
+          balances: {
+            current: 12500.75,
+            available: 12500.75,
+            limit: null
+          }
+        }
+      ]
+    }
+  }),
+  transactionsGet: async () => ({
+    data: {
+      transactions: [
+        {
+          transaction_id: 'mock_tx_1',
+          account_id: 'mock_account_1',
+          amount: 125.45,
+          date: '2025-05-20',
+          name: 'Mock Office Supplies Store',
+          category: ['Shops', 'Office Supplies']
+        },
+        {
+          transaction_id: 'mock_tx_2',
+          account_id: 'mock_account_1',
+          amount: -2500.00,
+          date: '2025-05-15',
+          name: 'Mock Direct Deposit',
+          category: ['Income', 'Direct Deposit']
+        }
+      ],
+      total_transactions: 2
+    }
+  }),
+  transactionsSync: async () => ({
+    data: {
+      added: [
+        {
+          transaction_id: 'mock_tx_3',
+          account_id: 'mock_account_1',
+          amount: 75.25,
+          date: '2025-05-22',
+          name: 'Mock Restaurant',
+          category: ['Food and Drink', 'Restaurants']
+        }
+      ],
+      modified: [],
+      removed: [],
+      has_more: false,
+      next_cursor: 'mock_cursor_123'
+    }
+  })
+};
 
 /**
  * Create a link token for initiating a Plaid Link session
  */
 export async function createLinkToken(userId: string, organizationId: string) {
   try {
-    const response = await plaidClient.linkTokenCreate({
-      user: {
-        client_user_id: userId,
-      },
-      client_name: 'Finance App',
-      products: [Products.Transactions],
-      country_codes: [CountryCode.Us],
-      language: 'en',
-      webhook: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/plaid`,
-    });
-
-    return response.data;
+    // Return mock data instead of calling Plaid
+    return {
+      link_token: 'mock_link_token_123',
+      expiration: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+    };
   } catch (error) {
     console.error('Error creating link token:', error);
     throw error;
@@ -41,11 +103,11 @@ export async function createLinkToken(userId: string, organizationId: string) {
  */
 export async function exchangePublicToken(publicToken: string) {
   try {
-    const response = await plaidClient.itemPublicTokenExchange({
-      public_token: publicToken,
-    });
-
-    return response.data;
+    // Return mock data instead of calling Plaid
+    return {
+      access_token: 'mock_access_token_123',
+      item_id: 'mock_item_id_123'
+    };
   } catch (error) {
     console.error('Error exchanging public token:', error);
     throw error;
@@ -53,15 +115,35 @@ export async function exchangePublicToken(publicToken: string) {
 }
 
 /**
- * Get bank accounts for an item
+ * Get accounts for an access token
  */
 export async function getAccounts(accessToken: string) {
   try {
-    const response = await plaidClient.accountsGet({
-      access_token: accessToken,
-    });
-
-    return response.data;
+    // Return mock accounts instead of calling Plaid
+    return [
+      {
+        id: 'mock_account_1',
+        name: 'Mock Checking',
+        type: 'depository',
+        subtype: 'checking',
+        mask: '1234',
+        balance: {
+          current: 5000.25,
+          available: 4800.50
+        }
+      },
+      {
+        id: 'mock_account_2',
+        name: 'Mock Savings',
+        type: 'depository',
+        subtype: 'savings',
+        mask: '5678',
+        balance: {
+          current: 12500.75,
+          available: 12500.75
+        }
+      }
+    ];
   } catch (error) {
     console.error('Error getting accounts:', error);
     throw error;
@@ -69,7 +151,7 @@ export async function getAccounts(accessToken: string) {
 }
 
 /**
- * Get transactions for an account
+ * Get transactions for an access token
  */
 export async function getTransactions(
   accessToken: string,
@@ -82,18 +164,28 @@ export async function getTransactions(
   } = {}
 ) {
   try {
-    const response = await plaidClient.transactionsGet({
-      access_token: accessToken,
-      start_date: startDate,
-      end_date: endDate,
-      options: {
-        account_ids: options.accountIds,
-        count: options.count,
-        offset: options.offset,
-      },
-    });
-
-    return response.data;
+    // Return mock transactions instead of calling Plaid
+    return {
+      transactions: [
+        {
+          id: 'mock_tx_1',
+          accountId: 'mock_account_1',
+          amount: 125.45,
+          date: '2025-05-20',
+          name: 'Mock Office Supplies Store',
+          category: ['Shops', 'Office Supplies']
+        },
+        {
+          id: 'mock_tx_2',
+          accountId: 'mock_account_1',
+          amount: -2500.00,
+          date: '2025-05-15',
+          name: 'Mock Direct Deposit',
+          category: ['Income', 'Direct Deposit']
+        }
+      ],
+      total: 2
+    };
   } catch (error) {
     console.error('Error getting transactions:', error);
     throw error;
@@ -101,15 +193,27 @@ export async function getTransactions(
 }
 
 /**
- * Sync transactions for an item (incremental update)
+ * Sync transactions for an access token
  */
 export async function syncTransactions(accessToken: string) {
   try {
-    const response = await plaidClient.transactionsSync({
-      access_token: accessToken,
-    });
-
-    return response.data;
+    // Return mock transactions instead of calling Plaid
+    return {
+      added: [
+        {
+          id: 'mock_tx_3',
+          accountId: 'mock_account_1',
+          amount: 75.25,
+          date: '2025-05-22',
+          name: 'Mock Restaurant',
+          category: ['Food and Drink', 'Restaurants']
+        }
+      ],
+      modified: [],
+      removed: [],
+      hasMore: false,
+      cursor: 'mock_cursor_123'
+    };
   } catch (error) {
     console.error('Error syncing transactions:', error);
     throw error;
