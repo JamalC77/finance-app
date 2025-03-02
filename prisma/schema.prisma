@@ -1,0 +1,425 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Organization model for multi-tenant support
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Organization properties
+  address           String?
+  city              String?
+  state             String?
+  zip               String?
+  country           String?
+  phoneNumber       String?
+  email             String?
+  website           String?
+  taxIdentifier     String? // EIN, VAT number, etc.
+  fiscalYearStart   DateTime?
+  defaultCurrency   String   @default("USD")
+
+  // Relationships
+  users             User[]
+  accounts          Account[]
+  transactions      Transaction[]
+  contacts          Contact[]
+  invoices          Invoice[]
+  expenses          Expense[]
+  products          Product[]
+  taxCategories     TaxCategory[]
+  bankConnections   BankConnection[]
+
+  @@map("organizations")
+}
+
+// User model for authentication and access control
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  password       String // Hashed password
+  role           UserRole @default(USER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // User session management
+  lastLogin      DateTime?
+  isActive       Boolean   @default(true)
+  
+  // Relationship with organization (multi-tenant)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  ACCOUNTANT
+  USER
+}
+
+// Chart of accounts model
+model Account {
+  id               String       @id @default(cuid())
+  name             String
+  code             String       // Account code (e.g., 1000, 2000)
+  type             AccountType
+  subtype          String?
+  description      String?
+  isActive         Boolean      @default(true)
+  balance          Float        @default(0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  
+  // For building account hierarchy
+  parentId         String?
+  parent           Account?     @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children         Account[]    @relation("AccountHierarchy")
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id])
+
+  // Transaction relationships
+  debitEntries     LedgerEntry[] @relation("DebitAccount")
+  creditEntries    LedgerEntry[] @relation("CreditAccount")
+
+  @@unique([organizationId, code])
+  @@map("accounts")
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+// Transaction model for financial events
+model Transaction {
+  id              String       @id @default(cuid())
+  date            DateTime
+  description     String
+  reference       String?
+  status          TransactionStatus @default(PENDING)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // External references
+  invoiceId       String?
+  expenseId       String?
+  bankTransactionId String?
+  
+  // Relationships
+  ledgerEntries   LedgerEntry[]
+  
+  // Relationship with organization (multi-tenant)
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  CLEARED
+  RECONCILED
+  VOIDED
+}
+
+// Ledger entries for double-entry accounting
+model LedgerEntry {
+  id              String     @id @default(cuid())
+  amount          Float
+  memo            String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  // Transaction reference
+  transactionId   String
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  
+  // Account references (double-entry)
+  debitAccountId  String?
+  debitAccount    Account?   @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  
+  creditAccountId String?
+  creditAccount   Account?   @relation("CreditAccount", fields: [creditAccountId], references: [id])
+
+  @@map("ledger_entries")
+}
+
+// Contacts model (clients, vendors, etc.)
+model Contact {
+  id               String        @id @default(cuid())
+  name             String
+  type             ContactType
+  email            String?
+  phone            String?
+  address          String?
+  city             String?
+  state            String?
+  zip              String?
+  country          String?
+  taxIdentifier    String?       // SSN, EIN, VAT number
+  notes            String?
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relationships
+  invoices         Invoice[]
+  expenses         Expense[]
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+
+  @@map("contacts")
+}
+
+enum ContactType {
+  CUSTOMER
+  VENDOR
+  EMPLOYEE
+  CONTRACTOR
+  OTHER
+}
+
+// Invoice model
+model Invoice {
+  id               String         @id @default(cuid())
+  number           String         // Invoice number (e.g., INV-0001)
+  date             DateTime
+  dueDate          DateTime
+  status           InvoiceStatus  @default(DRAFT)
+  subtotal         Float
+  taxAmount        Float          @default(0)
+  total            Float
+  notes            String?
+  terms            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  
+  // Relationships
+  contactId        String
+  contact          Contact        @relation(fields: [contactId], references: [id])
+  
+  lineItems        InvoiceLineItem[]
+  payments         Payment[]
+  transactions     Transaction[]
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization   @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, number])
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOIDED
+}
+
+// Invoice line items
+model InvoiceLineItem {
+  id               String     @id @default(cuid())
+  description      String
+  quantity         Float
+  unitPrice        Float
+  amount           Float      // Calculated: quantity * unitPrice
+  taxRate          Float      @default(0)
+  
+  // Relationships
+  invoiceId        String
+  invoice          Invoice    @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  
+  productId        String?
+  product          Product?   @relation(fields: [productId], references: [id])
+  
+  taxCategoryId    String?
+  taxCategory      TaxCategory? @relation(fields: [taxCategoryId], references: [id])
+
+  @@map("invoice_line_items")
+}
+
+// Payment model
+model Payment {
+  id               String        @id @default(cuid())
+  date             DateTime
+  amount           Float
+  method           PaymentMethod
+  reference        String?       // Check #, transaction ID, etc.
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Payment for invoice
+  invoiceId        String?
+  invoice          Invoice?      @relation(fields: [invoiceId], references: [id])
+  
+  // If it's a payment made for an expense
+  expenseId        String?
+  expense          Expense?      @relation(fields: [expenseId], references: [id])
+  
+  // Processing fee (our revenue)
+  processingFee    Float         @default(0)
+
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CASH
+  CHECK
+  CREDIT_CARD
+  BANK_TRANSFER
+  ONLINE_PAYMENT
+  OTHER
+}
+
+// Expense model
+model Expense {
+  id               String        @id @default(cuid())
+  date             DateTime
+  description      String
+  amount           Float
+  reference        String?       // Receipt #, etc.
+  status           ExpenseStatus @default(PENDING)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relationships
+  contactId        String?
+  contact          Contact?      @relation(fields: [contactId], references: [id])
+  
+  accountId        String?       // Which expense account it's categorized to
+  
+  receiptUrl       String?       // URL to uploaded receipt
+  
+  transactions     Transaction[]
+  payments         Payment[]
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+
+  @@map("expenses")
+}
+
+enum ExpenseStatus {
+  PENDING
+  PAID
+  RECONCILED
+  VOIDED
+}
+
+// Product/Service model
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  description      String?
+  type             ProductType
+  sku              String?
+  price            Float
+  cost             Float?
+  taxable          Boolean       @default(true)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Inventory tracking
+  quantityOnHand   Float?
+  reorderPoint     Float?
+  
+  // Relationships
+  invoiceItems     InvoiceLineItem[]
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+
+  @@map("products")
+}
+
+enum ProductType {
+  INVENTORY
+  SERVICE
+  NON_INVENTORY
+}
+
+// Tax categories
+model TaxCategory {
+  id               String        @id @default(cuid())
+  name             String
+  description      String?
+  rate             Float         @default(0)
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // Relationships
+  invoiceItems     InvoiceLineItem[]
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+
+  @@map("tax_categories")
+}
+
+// Bank/Credit Card Connections
+model BankConnection {
+  id               String        @id @default(cuid())
+  institutionName  String
+  accountName      String
+  accountNumber    String        // Last 4 digits for security
+  accountType      BankAccountType
+  balance          Float
+  lastSync         DateTime?
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  // External API IDs (e.g., Plaid)
+  externalId       String?
+  
+  // Banking connection settings/tokens
+  accessToken      String?
+  refreshToken     String?
+  
+  // Relationship with organization (multi-tenant)
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+
+  @@map("bank_connections")
+}
+
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+  CREDIT_CARD
+  INVESTMENT
+  OTHER
+}
