@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dashboardSummary } from '@/lib/mock-data';
+import ExportButton from '@/components/ExportButton';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -35,6 +36,28 @@ export default function ReportsPage() {
   
   const { income, expenses, profitLoss, cashFlow } = dashboardSummary;
   
+  // Prepare data for export 
+  const getProfitLossData = () => {
+    return [
+      { category: 'Service Revenue', amount: income.ytd * 0.7, type: 'Income' },
+      { category: 'Product Sales', amount: income.ytd * 0.3, type: 'Income' },
+      { category: 'Total Income', amount: income.ytd, type: 'Income' },
+      { category: 'Office Supplies', amount: expenses.ytd * 0.25, type: 'Expense' },
+      { category: 'Software & Services', amount: expenses.ytd * 0.15, type: 'Expense' },
+      { category: 'Utilities', amount: expenses.ytd * 0.2, type: 'Expense' },
+      { category: 'Travel & Entertainment', amount: expenses.ytd * 0.1, type: 'Expense' },
+      { category: 'Other Expenses', amount: expenses.ytd * 0.3, type: 'Expense' },
+      { category: 'Total Expenses', amount: expenses.ytd, type: 'Expense' },
+      { category: 'Net Profit', amount: profitLoss.ytd, type: 'Summary' }
+    ];
+  };
+
+  const profitLossColumns = [
+    { header: 'Category', accessor: 'category' },
+    { header: 'Amount', accessor: 'amount' },
+    { header: 'Type', accessor: 'type' }
+  ];
+  
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center justify-between">
@@ -44,10 +67,11 @@ export default function ReportsPage() {
             <CalendarIcon className="mr-2 h-4 w-4" />
             Last 30 Days
           </Button>
-          <Button variant="outline" size="sm">
-            <DownloadIcon className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          <ExportButton 
+            title="Profit and Loss Report" 
+            data={getProfitLossData()}
+            columns={profitLossColumns}
+          />
         </div>
       </div>
 

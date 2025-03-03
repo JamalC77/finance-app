@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Landmark, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ApiConnectionTestWrapper from "@/components/ApiConnectionTestWrapper";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   return (
@@ -11,7 +13,8 @@ export default function Home() {
           <Landmark className="h-6 w-6" />
           <span>Finance App</span>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-4">
+          <ThemeToggle />
           <Link href="/dashboard">
             <Button>
               Log In
@@ -43,6 +46,21 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* API Connection Test Section */}
+        <section className="py-10 bg-background">
+          <div className="mx-auto max-w-3xl px-6">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                API Connection Status
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                Verifying connection to the backend services
+              </p>
+            </div>
+            <ApiConnectionTestWrapper />
           </div>
         </section>
 

@@ -20,6 +20,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import OnboardingTrigger from '@/components/onboarding/OnboardingTrigger';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface NavItemProps {
   href: string;
@@ -155,6 +157,7 @@ export default function DashboardLayout({
           </Link>
         </div>
         <div className="ml-auto flex items-center gap-4">
+          <ThemeToggle />
           <span className="text-sm text-muted-foreground hidden md:inline-flex">
             Your Business Name
           </span>
@@ -208,6 +211,8 @@ export default function DashboardLayout({
         {/* Main Content */}
         <main className="flex-1">{children}</main>
       </div>
+      
+      <OnboardingTrigger />
     </div>
   );
 } 

@@ -43,6 +43,7 @@ model Organization {
   products          Product[]
   taxCategories     TaxCategory[]
   bankConnections   BankConnection[]
+  reconciliationStatements ReconciliationStatement[]
 
   @@map("organizations")
 }
@@ -99,6 +100,9 @@ model Account {
   // Transaction relationships
   debitEntries     LedgerEntry[] @relation("DebitAccount")
   creditEntries    LedgerEntry[] @relation("CreditAccount")
+  
+  // Reconciliation relationships
+  reconciliationStatements ReconciliationStatement[]
 
   @@unique([organizationId, code])
   @@map("accounts")
@@ -133,6 +137,9 @@ model Transaction {
   // Relationship with organization (multi-tenant)
   organizationId  String
   organization    Organization @relation(fields: [organizationId], references: [id])
+  
+  // Relationship with statement transactions for reconciliation
+  matchedStatementTransaction StatementTransaction? @relation("MatchedTransaction")
   
   @@map("transactions")
 }
@@ -422,4 +429,50 @@ enum BankAccountType {
   CREDIT_CARD
   INVESTMENT
   OTHER
+}
+
+// Models for account reconciliation
+model ReconciliationStatement {
+  id                  String        @id @default(cuid())
+  statementDate       DateTime
+  beginningBalance    Float
+  endingBalance       Float
+  isReconciled        Boolean       @default(false)
+  notes               String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  
+  // Account being reconciled
+  accountId           String
+  account             Account       @relation(fields: [accountId], references: [id])
+  
+  // Organization (multi-tenant)
+  organizationId      String
+  organization        Organization  @relation(fields: [organizationId], references: [id])
+  
+  // Statement transactions
+  statementTransactions StatementTransaction[]
+
+  @@map("reconciliation_statements")
+}
+
+model StatementTransaction {
+  id                  String        @id @default(cuid())
+  date                DateTime
+  description         String
+  amount              Float
+  reference           String?
+  isMatched           Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  
+  // Matched with system transaction
+  transactionId       String?
+  transaction         Transaction?  @relation("MatchedTransaction", fields: [transactionId], references: [id])
+  
+  // Statement this transaction belongs to
+  statementId         String
+  statement           ReconciliationStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  
+  @@map("statement_transactions")
 }

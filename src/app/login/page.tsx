@@ -3,10 +3,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <Link href="/" className="text-2xl font-bold text-[hsl(var(--primary))]">

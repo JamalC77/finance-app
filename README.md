@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Finance App Frontend
+
+This is the frontend for the Finance App, built with Next.js.
+
+## Project Structure
+
+```
+finance-app/
+├── src/
+│   ├── app/             # Next.js app router
+│   ├── components/      # React components
+│   ├── lib/             # Shared utilities and API clients
+│   └── styles/          # CSS and styling
+├── public/              # Static assets
+└── .env.example         # Example environment variables
+```
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
+- Node.js (v14 or higher)
+- npm or yarn
+- Finance App API running (see [API README](../finance-app-api/README.md))
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Set up environment variables:
+   ```
+   cp .env.example .env.local
+   ```
+4. Edit the `.env.local` file with your configuration
+
+### Development
+
+Start the development server:
+
+```
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application will run on http://localhost:3000 by default.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Building for Production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Build the application:
 
-## Learn More
+```
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+You can deploy the frontend to Vercel, Netlify, or any other static site hosting:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+npm run build
+```
 
-## Deploy on Vercel
+Then deploy the `.next` directory.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application uses environment variables for configuration. See `.env.example` for a list of required variables.
+
+Key environment variables:
+
+- `NEXT_PUBLIC_API_URL` - URL of the Finance App API (e.g., http://localhost:5000)
+
+## Connecting with the API
+
+The frontend connects to the API using the `NEXT_PUBLIC_API_URL` environment variable. Make sure the API is running and accessible from the frontend.
+
+## Security
+
+- All sensitive information is stored in environment variables
+- API keys and secrets are never exposed to the client
+- Authentication is handled securely through the API

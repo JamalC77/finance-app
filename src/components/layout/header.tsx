@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BellIcon, MenuIcon, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -37,6 +38,8 @@ export function Header({ onMenuClick }: HeaderProps) {
       </div>
       
       <div className="flex items-center gap-2">
+        <ThemeToggle />
+        
         <Button
           variant="ghost"
           size="icon"
