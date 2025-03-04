@@ -2,8 +2,16 @@
  * Environment variable utility to safely access and validate required env vars
  */
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
+
 // Function to get environment variables with validation
 export function getEnvVariable(key: string, defaultValue?: string): string {
+  // Skip validation for server-only variables when in browser
+  if (isBrowser && isServerOnlyVariable(key)) {
+    return ''; // Return empty string for server-only variables in browser
+  }
+
   const value = process.env[key] || defaultValue;
   
   if (value === undefined) {
@@ -13,30 +21,31 @@ export function getEnvVariable(key: string, defaultValue?: string): string {
   return value;
 }
 
+// List of variables that should only be accessed on the server
+function isServerOnlyVariable(key: string): boolean {
+  const serverOnlyVariables = [
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'PLAID_SECRET',
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET'
+  ];
+  
+  return serverOnlyVariables.includes(key);
+}
+
 // Export commonly used environment variables
 export const env = {
-  // Database
-  DATABASE_URL: getEnvVariable('DATABASE_URL'),
-  
-  // Authentication
-  JWT_SECRET: getEnvVariable('JWT_SECRET'),
-  NEXTAUTH_SECRET: getEnvVariable('NEXTAUTH_SECRET'),
-  NEXTAUTH_URL: getEnvVariable('NEXTAUTH_URL'),
-  
-  // Plaid
+  // Client-safe variables
+  API_URL: getEnvVariable('NEXT_PUBLIC_API_URL', '/api'),
+  NEXTAUTH_URL: getEnvVariable('NEXTAUTH_URL', isBrowser ? window.location.origin : ''),
   PLAID: {
-    CLIENT_ID: getEnvVariable('PLAID_CLIENT_ID'),
-    SECRET: getEnvVariable('PLAID_SECRET'),
+    CLIENT_ID: getEnvVariable('PLAID_CLIENT_ID', ''),
     ENV: getEnvVariable('PLAID_ENV', 'sandbox'),
   },
   
-  // Stripe
-  STRIPE: {
-    SECRET_KEY: getEnvVariable('STRIPE_SECRET_KEY'),
-    WEBHOOK_SECRET: getEnvVariable('STRIPE_WEBHOOK_SECRET'),
-  },
-  
-  // Add other service configurations as needed
+  // Check if we're in a development environment
+  NODE_ENV: process.env.NODE_ENV || 'development'
 };
 
 // Check if we're in a development environment

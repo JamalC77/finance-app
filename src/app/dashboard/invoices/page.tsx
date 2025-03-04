@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -12,7 +12,8 @@ import {
   Mail,
   Edit,
   Trash2,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { invoices, contacts } from '@/lib/mock-data';
+import { getInvoices } from '@/api/services/invoiceService';
+import { toast } from '@/components/ui/use-toast';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -32,13 +34,28 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-const formatDate = (date: Date | null) => {
-  if (!date) return 'Not paid';
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(date);
+const formatDate = (date: any) => {
+  // Return early if date is not provided
+  if (!date) return 'Not specified';
+  
+  try {
+    // Handle string date formats
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    
+    // Check if date is valid
+    if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(dateObj);
+  } catch (error) {
+    console.error('Error formatting date:', error, date);
+    return 'Invalid date';
+  }
 };
 
 const getStatusColor = (status: string) => {
@@ -57,28 +74,45 @@ const getStatusColor = (status: string) => {
 export default function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [invoiceData, setInvoiceData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Get contact names for invoices
-  const enrichedInvoices = invoices.map(invoice => {
-    const contact = contacts.find(c => c.id === invoice.contactId);
-    return {
-      ...invoice,
-      contactName: contact ? contact.name : 'Unknown',
-    };
-  });
+  useEffect(() => {
+    fetchInvoices();
+  }, [statusFilter]);
   
-  // Filter invoices based on search query and status
-  const filteredInvoices = enrichedInvoices.filter(invoice => {
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const filters: any = {};
+      
+      if (statusFilter) {
+        filters.status = statusFilter;
+      }
+      
+      const data = await getInvoices(filters);
+      setInvoiceData(data);
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load invoices',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Filter invoices based on search query
+  const filteredInvoices = invoiceData.filter(invoice => {
     // Filter by search query
     const matchesSearch = 
-      invoice.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.contactName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.id.toLowerCase().includes(searchQuery.toLowerCase());
+      invoice.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.contact?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.id?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Filter by status
-    const matchesStatus = statusFilter ? invoice.status === statusFilter : true;
-    
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
   
   // Get total stats
@@ -243,7 +277,16 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredInvoices.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="h-24 text-center">
+                      <div className="flex justify-center items-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                        <span>Loading invoices...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredInvoices.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="h-12 px-4 text-center text-muted-foreground">
                       No invoices found
@@ -254,13 +297,13 @@ export default function InvoicesPage() {
                     <tr key={invoice.id} className="border-b hover:bg-muted/50">
                       <td className="h-12 px-4 align-middle">
                         <Link href={`/dashboard/invoices/${invoice.id}`} className="text-primary hover:underline">
-                          {invoice.id}
+                          {invoice.number}
                         </Link>
                       </td>
                       <td className="h-12 px-4 align-middle font-medium">
-                        {invoice.contactName}
+                        {invoice.contact?.name || 'Unknown'}
                       </td>
-                      <td className="h-12 px-4 align-middle">{formatDate(invoice.issueDate)}</td>
+                      <td className="h-12 px-4 align-middle">{formatDate(invoice.date)}</td>
                       <td className="h-12 px-4 align-middle">{formatDate(invoice.dueDate)}</td>
                       <td className="h-12 px-4 align-middle font-medium">{formatCurrency(invoice.total)}</td>
                       <td className="h-12 px-4 align-middle text-center">
@@ -273,29 +316,32 @@ export default function InvoicesPage() {
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Download className="mr-2 h-4 w-4" />
-                              <span>Download PDF</span>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/invoices/${invoice.id}`}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Details
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/invoices/${invoice.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Mail className="mr-2 h-4 w-4" />
-                              <span>Send Email</span>
+                              Send
                             </DropdownMenuItem>
                             <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              <span>View Details</span>
+                              <Download className="mr-2 h-4 w-4" />
+                              Download
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
+                            <DropdownMenuItem className="text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
+                              Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

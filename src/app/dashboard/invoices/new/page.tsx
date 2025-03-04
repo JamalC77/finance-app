@@ -1,11 +1,306 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, Save, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/use-toast";
+import { createInvoice, sendInvoice } from "@/api/services/invoiceService";
+import { getContacts } from "@/api/services/contactService";
+
+// Define types for better safety
+interface LineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  amount: number;
+}
+
+interface Contact {
+  id: string;
+  name: string;
+  email?: string;
+  address?: string;
+}
 
 export default function NewInvoicePage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(true);
+
+  // Invoice form state
+  const [invoiceData, setInvoiceData] = useState({
+    number: `INV-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+    date: new Date().toISOString().split('T')[0],
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    contactId: "",
+    subtotal: 0,
+    taxAmount: 0,
+    total: 0,
+    notes: "",
+    terms: "Thank you for your business!",
+    status: "DRAFT"
+  });
+
+  // Line items state
+  const [lineItems, setLineItems] = useState<LineItem[]>([
+    {
+      id: crypto.randomUUID(),
+      description: "",
+      quantity: 1,
+      unitPrice: 0,
+      taxRate: 0,
+      amount: 0
+    }
+  ]);
+
+  // Fetch contacts on component mount
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    try {
+      setLoadingContacts(true);
+      const contactsData = await getContacts({ type: "CUSTOMER" });
+      setContacts(contactsData);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load contacts. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  // Handle input changes for invoice form
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setInvoiceData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle line item changes
+  const handleLineItemChange = (id: string, field: keyof LineItem, value: string | number) => {
+    setLineItems((prevItems) => {
+      const updatedItems = prevItems.map((item) => {
+        if (item.id === id) {
+          const updatedItem = { ...item, [field]: value };
+          
+          // Recalculate amount when quantity or unitPrice changes
+          if (field === 'quantity' || field === 'unitPrice') {
+            const quantity = field === 'quantity' ? Number(value) : item.quantity;
+            const unitPrice = field === 'unitPrice' ? Number(value) : item.unitPrice;
+            updatedItem.amount = quantity * unitPrice;
+          }
+          
+          return updatedItem;
+        }
+        return item;
+      });
+      
+      // Update invoice totals
+      calculateInvoiceTotals(updatedItems);
+      
+      return updatedItems;
+    });
+  };
+
+  // Calculate invoice totals
+  const calculateInvoiceTotals = (items: LineItem[]) => {
+    const subtotal = items.reduce((sum, item) => sum + item.amount, 0);
+    const taxAmount = items.reduce((sum, item) => {
+      return sum + (item.amount * (item.taxRate / 100));
+    }, 0);
+    const total = subtotal + taxAmount;
+
+    setInvoiceData((prev) => ({
+      ...prev,
+      subtotal,
+      taxAmount,
+      total
+    }));
+  };
+
+  // Add a new line item
+  const addLineItem = () => {
+    setLineItems((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        description: "",
+        quantity: 1,
+        unitPrice: 0,
+        taxRate: 0,
+        amount: 0
+      }
+    ]);
+  };
+
+  // Remove a line item
+  const removeLineItem = (id: string) => {
+    if (lineItems.length === 1) {
+      toast({
+        title: "Cannot Remove",
+        description: "Invoice must have at least one line item",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLineItems((prev) => {
+      const filteredItems = prev.filter(item => item.id !== id);
+      calculateInvoiceTotals(filteredItems);
+      return filteredItems;
+    });
+  };
+  
+  // Validate invoice data
+  const validateInvoice = () => {
+    if (!invoiceData.contactId) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a client",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!invoiceData.date || !invoiceData.dueDate) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide invoice and due dates",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validate line items
+    const invalidItems = lineItems.some(item => 
+      !item.description || item.quantity <= 0 || item.unitPrice < 0
+    );
+
+    if (invalidItems) {
+      toast({
+        title: "Invalid Line Items",
+        description: "Please check that all line items have a description and valid quantity/price",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  // Save invoice as draft
+  const saveAsDraft = async () => {
+    if (!validateInvoice()) return;
+    
+    try {
+      setLoading(true);
+      
+      const formattedLineItems = lineItems.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        amount: item.amount,
+        taxRate: item.taxRate
+      }));
+      
+      const invoicePayload = {
+        ...invoiceData,
+        status: "DRAFT",
+        lineItems: formattedLineItems
+      };
+      
+      const result = await createInvoice(invoicePayload);
+      
+      toast({
+        title: "Success",
+        description: "Invoice saved as draft",
+      });
+      
+      // Redirect to invoice detail page
+      router.push(`/dashboard/invoices/${result.id}`);
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save invoice. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save and send invoice
+  const saveAndSendInvoice = async () => {
+    if (!validateInvoice()) return;
+    
+    try {
+      setLoading(true);
+      
+      const formattedLineItems = lineItems.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        amount: item.amount,
+        taxRate: item.taxRate
+      }));
+      
+      const invoicePayload = {
+        ...invoiceData,
+        status: "SENT",
+        lineItems: formattedLineItems
+      };
+      
+      // Create the invoice
+      const createdInvoice = await createInvoice(invoicePayload);
+      
+      // Send the invoice
+      await sendInvoice(createdInvoice.id, {
+        message: "Please find your invoice attached. Thank you for your business!"
+      });
+      
+      toast({
+        title: "Success",
+        description: "Invoice created and sent to client",
+      });
+      
+      // Redirect to invoice detail page
+      router.push(`/dashboard/invoices/${createdInvoice.id}`);
+    } catch (error) {
+      console.error("Error creating/sending invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create or send invoice. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format currency for display
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center mb-6">

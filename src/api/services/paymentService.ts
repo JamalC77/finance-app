@@ -106,4 +106,17 @@ export async function processManualPayment(invoiceId: string, paymentMethodId: s
     console.error('Error processing manual payment:', error);
     throw error;
   }
+}
+
+/**
+ * Get a payment link for an invoice
+ */
+export async function getPaymentLink(invoiceId: string) {
+  try {
+    const response = await apiClient.get(`/payments/invoice/${invoiceId}/payment-link`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting payment link:', error);
+    throw error;
+  }
 } 

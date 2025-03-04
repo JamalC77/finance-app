@@ -4,6 +4,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
 import { apiService } from '../contexts/ApiContext';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/use-toast';
 
 // Types
 export type User = {
@@ -22,6 +24,7 @@ export type AuthContextType = {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUserData: (data: User) => void;
+  bypassAuth: () => void;
 };
 
 // Create context with default values
@@ -34,6 +37,7 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: async () => {},
   setUserData: () => {},
+  bypassAuth: () => {},
 });
 
 // Custom hook to use the auth context
@@ -184,6 +188,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(data);
   };
 
+  // Debug bypass function to set a mock token and user
+  const bypassAuth = () => {
+    // Create a mock token that won't expire for 24 hours
+    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZXYtdXNlci1pZCIsIm5hbWUiOiJEZXZlbG9wbWVudCBVc2VyIiwiZW1haWwiOiJkZXZAZXhhbXBsZS5jb20iLCJyb2xlIjoiQURNSU4iLCJvcmdhbml6YXRpb25JZCI6ImRldi1vcmctaWQiLCJpYXQiOjE2MDk0NTkwMDAsImV4cCI6OTk5OTk5OTk5OX0.bTRrT1d0QWtQeDEyM3dlZXdnRGRrM2VyZHphUVphdXdm';
+    
+    // Set mock user
+    const mockUser = {
+      id: 'dev-user-id',
+      name: 'Development User',
+      email: 'dev@example.com',
+      role: 'ADMIN'
+    };
+    
+    // Store token in localStorage
+    localStorage.setItem('financeAppToken', mockToken);
+    
+    // Update state
+    setToken(mockToken);
+    setUser(mockUser);
+    
+    // Show success message
+    toast({
+      title: 'Bypassed Authentication',
+      description: 'Using development user credentials',
+      duration: 3000
+    });
+    
+    // Redirect to dashboard
+    router.push('/dashboard');
+  };
+
   // Compute authentication status
   const isAuthenticated = !!user && !!token;
 
@@ -197,11 +232,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     register,
     logout,
     setUserData,
+    bypassAuth,
   };
 
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
+      {process.env.NODE_ENV !== 'production' && !isAuthenticated && !isLoading && (
+        <div className="fixed bottom-4 right-4 z-50 p-4 bg-black bg-opacity-70 rounded-lg">
+          <Button 
+            variant="destructive"
+            onClick={bypassAuth}
+            className="text-xs"
+          >
+            Bypass Auth (Dev Only)
+          </Button>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 }; 
