@@ -1,7 +1,8 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -18,9 +19,49 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { dashboardSummary } from '@/lib/mock-data';
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, TooltipProps } from 'recharts';
 import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import { useApi } from '@/lib/contexts/ApiContext';
+import { useAuth } from '@/lib/contexts/AuthContext';
+
+// Types for our data
+type Transaction = {
+  id: string;
+  type: 'credit' | 'debit';
+  amount: number;
+  date: string;
+  description: string;
+};
+
+type Invoice = {
+  id: string;
+  invoiceNumber: string;
+  contactId: string;
+  total: number;
+  status: string;
+  issueDate: string;
+  dueDate: string;
+  updatedAt: string;
+};
+
+type Expense = {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  category?: string;
+  contactId?: string;
+  status: string;
+  updatedAt: string;
+};
+
+type Contact = {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  type: 'customer' | 'vendor' | 'both';
+};
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -31,12 +72,12 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-const formatDate = (date: Date) => {
+const formatDate = (date: string | Date) => {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  }).format(date);
+  }).format(new Date(date));
 };
 
 const getActivityIcon = (type: string) => {
@@ -55,6 +96,316 @@ const getActivityIcon = (type: string) => {
 };
 
 export default function DashboardPage() {
+  const [dashboardData, setDashboardData] = useState({
+    cash: { balance: 0, changePercentage: 0 },
+    income: { mtd: 0, changePercentage: 0 },
+    expenses: { mtd: 0, changePercentage: 0 },
+    profitLoss: { mtd: 0, changePercentage: 0 },
+    recentActivity: [] as any[],
+    cashFlow: [] as any[],
+    topCustomers: [] as any[],
+    topExpenseCategories: [] as any[]
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  const router = useRouter();
+  const auth = useAuth();
+  const api = useApi();
+  
+  // Function to load dashboard data
+  const loadDashboardData = async () => {
+    try {
+      // If still loading auth or not authenticated, don't try to load data
+      if (auth.isLoading || !auth.isAuthenticated) {
+        return;
+      }
+
+      setIsLoading(true);
+      
+      // Get current date and calculate date range
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      
+      // Start date is first day of current month
+      const startDate = new Date(currentYear, currentMonth, 1);
+      
+      // End date is last day of current month
+      const endDate = new Date(currentYear, currentMonth + 1, 0);
+      
+      // Get previous month date range for comparison
+      const prevMonthStart = new Date(currentYear, currentMonth - 1, 1);
+      const prevMonthEnd = new Date(currentYear, currentMonth, 0);
+      
+      // Format dates for API
+      const formatApiDate = (date: Date) => {
+        return date.toISOString().split('T')[0];
+      };
+
+      // Load data in parallel using the new API context
+      const [
+        currentTransactions,
+        prevTransactions,
+        currentInvoices,
+        prevInvoices,
+        currentExpenses,
+        prevExpenses,
+        contacts
+      ] = await Promise.all([
+        // Current month transactions
+        api.get<Transaction[]>('/api/transactions', {
+          startDate: formatApiDate(startDate),
+          endDate: formatApiDate(endDate)
+        }),
+        // Previous month transactions
+        api.get<Transaction[]>('/api/transactions', {
+          startDate: formatApiDate(prevMonthStart),
+          endDate: formatApiDate(prevMonthEnd)
+        }),
+        // Current month invoices
+        api.get<Invoice[]>('/api/invoices', {
+          startDate: formatApiDate(startDate),
+          endDate: formatApiDate(endDate)
+        }),
+        // Previous month invoices
+        api.get<Invoice[]>('/api/invoices', {
+          startDate: formatApiDate(prevMonthStart),
+          endDate: formatApiDate(prevMonthEnd)
+        }),
+        // Current month expenses
+        api.get<Expense[]>('/api/expenses', {
+          startDate: formatApiDate(startDate),
+          endDate: formatApiDate(endDate)
+        }),
+        // Previous month expenses
+        api.get<Expense[]>('/api/expenses', {
+          startDate: formatApiDate(prevMonthStart),
+          endDate: formatApiDate(prevMonthEnd)
+        }),
+        // All contacts
+        api.get<Contact[]>('/api/contacts')
+      ]);
+      
+      // Calculate metrics
+      
+      // Current month income (sum of paid invoices)
+      const currentIncome = currentInvoices
+        .filter(invoice => invoice.status === 'paid')
+        .reduce((sum, invoice) => sum + invoice.total, 0);
+      
+      // Previous month income
+      const prevIncome = prevInvoices
+        .filter(invoice => invoice.status === 'paid')
+        .reduce((sum, invoice) => sum + invoice.total, 0);
+        
+      // Current month expenses
+      const currentExpensesTotal = currentExpenses
+        .filter(expense => expense.status === 'paid')
+        .reduce((sum, expense) => sum + expense.amount, 0);
+        
+      // Previous month expenses
+      const prevExpensesTotal = prevExpenses
+        .filter(expense => expense.status === 'paid')
+        .reduce((sum, expense) => sum + expense.amount, 0);
+        
+      // Cash balance (sum of all transactions)
+      const cashBalance = currentTransactions.reduce((sum, transaction) => {
+        return sum + (transaction.type === 'credit' ? transaction.amount : -transaction.amount);
+      }, 0);
+      
+      // Previous cash balance
+      const prevCashBalance = prevTransactions.reduce((sum, transaction) => {
+        return sum + (transaction.type === 'credit' ? transaction.amount : -transaction.amount);
+      }, 0);
+      
+      // Calculate percentage changes
+      const calculatePercentageChange = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return Math.round(((current - previous) / Math.abs(previous)) * 100);
+      };
+      
+      const incomeChangePercentage = calculatePercentageChange(currentIncome, prevIncome);
+      const expensesChangePercentage = calculatePercentageChange(currentExpensesTotal, prevExpensesTotal);
+      const cashChangePercentage = calculatePercentageChange(cashBalance, prevCashBalance);
+      const profitLossChangePercentage = calculatePercentageChange(
+        currentIncome - currentExpensesTotal,
+        prevIncome - prevExpensesTotal
+      );
+      
+      // Generate recent activity from transactions, invoices, and expenses
+      const recentActivity = [
+        // Paid invoices
+        ...currentInvoices
+          .filter(invoice => invoice.status === 'paid')
+          .map(invoice => {
+            const contact = contacts.find(c => c.id === invoice.contactId);
+            return {
+              id: invoice.id,
+              type: 'INVOICE_PAID',
+              description: `Invoice #${invoice.invoiceNumber} paid by ${contact?.name || 'Customer'}`,
+              date: new Date(invoice.updatedAt),
+              amount: invoice.total
+            };
+          }),
+        // Sent invoices
+        ...currentInvoices
+          .filter(invoice => invoice.status === 'sent')
+          .map(invoice => {
+            const contact = contacts.find(c => c.id === invoice.contactId);
+            return {
+              id: invoice.id,
+              type: 'INVOICE_SENT',
+              description: `Invoice #${invoice.invoiceNumber} sent to ${contact?.name || 'Customer'}`,
+              date: new Date(invoice.updatedAt),
+              amount: invoice.total
+            };
+          }),
+        // Paid expenses
+        ...currentExpenses
+          .filter(expense => expense.status === 'paid')
+          .map(expense => {
+            const contact = expense.contactId ? contacts.find(c => c.id === expense.contactId) : null;
+            return {
+              id: expense.id,
+              type: 'EXPENSE_PAID',
+              description: `Paid ${expense.description} ${contact ? `to ${contact.name}` : ''}`,
+              date: new Date(expense.updatedAt),
+              amount: -expense.amount
+            };
+          })
+      ]
+      .sort((a, b) => b.date.getTime() - a.date.getTime())
+      .slice(0, 5); // Get most recent 5 activities
+      
+      // Generate cash flow data for the last 6 months
+      const cashFlowData = [];
+      for (let i = 5; i >= 0; i--) {
+        const month = new Date(currentYear, currentMonth - i, 1);
+        const monthEnd = new Date(currentYear, currentMonth - i + 1, 0);
+        
+        // Get the month name
+        const monthName = month.toLocaleString('default', { month: 'short' });
+        
+        // Calculate income for this month
+        const monthIncome = currentInvoices
+          .filter(invoice => {
+            const invoiceDate = new Date(invoice.issueDate);
+            return (
+              invoiceDate >= month && 
+              invoiceDate <= monthEnd && 
+              invoice.status === 'paid'
+            );
+          })
+          .reduce((sum, invoice) => sum + invoice.total, 0);
+        
+        // Calculate expenses for this month
+        const monthExpenses = currentExpenses
+          .filter(expense => {
+            const expenseDate = new Date(expense.date);
+            return (
+              expenseDate >= month && 
+              expenseDate <= monthEnd && 
+              expense.status === 'paid'
+            );
+          })
+          .reduce((sum, expense) => sum + expense.amount, 0);
+        
+        cashFlowData.push({
+          month: monthName,
+          income: monthIncome,
+          expenses: monthExpenses
+        });
+      }
+      
+      // Calculate top customers
+      const customerInvoices = new Map();
+      currentInvoices.forEach(invoice => {
+        if (invoice.status === 'paid') {
+          const contactId = invoice.contactId;
+          if (!customerInvoices.has(contactId)) {
+            customerInvoices.set(contactId, {
+              id: contactId,
+              revenue: 0
+            });
+          }
+          
+          const customer = customerInvoices.get(contactId);
+          customer.revenue += invoice.total;
+        }
+      });
+      
+      const topCustomers = Array.from(customerInvoices.values())
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5) // Top 5 customers
+        .map(customer => {
+          const contact = contacts.find(c => c.id === customer.id);
+          return {
+            ...customer,
+            name: contact?.name || 'Customer'
+          };
+        });
+      
+      // Calculate top expense categories
+      const expenseCategories = new Map();
+      currentExpenses.forEach(expense => {
+        if (expense.status === 'paid') {
+          const category = expense.category || 'Uncategorized';
+          if (!expenseCategories.has(category)) {
+            expenseCategories.set(category, {
+              category,
+              amount: 0
+            });
+          }
+          
+          const categoryData = expenseCategories.get(category);
+          categoryData.amount += expense.amount;
+        }
+      });
+      
+      const topExpenseCategories = Array.from(expenseCategories.values())
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5); // Top 5 categories
+      
+      // Set dashboard data
+      setDashboardData({
+        cash: {
+          balance: cashBalance,
+          changePercentage: cashChangePercentage
+        },
+        income: {
+          mtd: currentIncome,
+          changePercentage: incomeChangePercentage
+        },
+        expenses: {
+          mtd: currentExpensesTotal,
+          changePercentage: expensesChangePercentage
+        },
+        profitLoss: {
+          mtd: currentIncome - currentExpensesTotal,
+          changePercentage: profitLossChangePercentage
+        },
+        recentActivity,
+        cashFlow: cashFlowData,
+        topCustomers,
+        topExpenseCategories
+      });
+    } catch (err) {
+      setError(err as Error);
+      console.error('Error loading dashboard data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Load data on component mount or when auth state changes
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      loadDashboardData();
+    }
+  }, [auth.isAuthenticated]);
+  
+  // Destructure dashboard data for easier access
   const { 
     cash, 
     income, 
@@ -64,11 +415,62 @@ export default function DashboardPage() {
     cashFlow,
     topCustomers,
     topExpenseCategories
-  } = dashboardSummary;
+  } = dashboardData;
+
+  // If auth is still loading, show a loading state
+  if (auth.isLoading) {
+    return (
+      <div className="space-y-4 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        </div>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-lg text-muted-foreground">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, don't show anything (will redirect from useEffect)
+  if (!auth.isAuthenticated) {
+    return null;
+  }
+
+  // Show loading state for dashboard data
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        </div>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-lg text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="space-y-4 p-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        </div>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-lg text-red-500 mb-4">Error loading dashboard data</p>
+            <p className="text-sm text-muted-foreground mb-4">{error.message}</p>
+            <Button onClick={loadDashboardData}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Type-safe formatter functions for Recharts
   const tooltipFormatter = (value: number, name: string) => [`$${value}`, name];
-  const tooltipLabelFormatter = (label: string) => `${label} 2025`;
+  const tooltipLabelFormatter = (label: string) => `${label} ${new Date().getFullYear()}`;
 
   return (
     <div className="space-y-4 p-6">
@@ -86,7 +488,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Key Metrics */}
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between py-4">
@@ -173,9 +574,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts and Activity */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-        {/* Cash Flow Chart */}
         <Card className="lg:col-span-4">
           <CardHeader>
             <CardTitle>Cash Flow</CardTitle>
@@ -215,7 +614,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
         <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
@@ -254,9 +652,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Top Customers and Expenses */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        {/* Top Customers */}
         <Card>
           <CardHeader>
             <CardTitle>Top Customers</CardTitle>
@@ -294,7 +690,6 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
 
-        {/* Top Expense Categories */}
         <Card>
           <CardHeader>
             <CardTitle>Top Expense Categories</CardTitle>
@@ -330,7 +725,6 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Button asChild variant="outline" className="h-20 justify-start px-4">
           <Link href="/dashboard/invoices/new">

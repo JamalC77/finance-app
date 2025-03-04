@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -25,7 +25,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { accounts } from '@/lib/mock-data';
+import { useApi } from '@/lib/contexts/ApiContext';
+import { accounts as mockAccounts } from '@/lib/mock-data';
+
+// Define account type that works with both mock data and API data
+interface Account {
+  id: string;
+  name: string;
+  code?: string;
+  accountNumber?: string;
+  type: string;
+  subtype?: string;
+  description?: string;
+  balance?: number;
+  currentBalance?: number;
+  organizationId: string;
+  institution?: string;
+  isActive?: boolean;
+}
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -34,33 +51,73 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+// Get account type icon based on account type
 const getAccountTypeIcon = (type: string) => {
-  switch (type) {
+  switch (type.toUpperCase()) {
     case 'BANK':
-      return <Landmark className="h-4 w-4 text-blue-500" />;
+      return <Landmark className="h-5 w-5" />;
     case 'CREDIT_CARD':
-      return <CreditCard className="h-4 w-4 text-purple-500" />;
+      return <CreditCard className="h-5 w-5" />;
     case 'LOAN':
-      return <Wallet className="h-4 w-4 text-green-500" />;
+      return <FileText className="h-5 w-5" />;
     default:
-      return <Landmark className="h-4 w-4" />;
+      return <Wallet className="h-5 w-5" />;
   }
 };
 
+// Get account type name based on account type
 const getAccountTypeName = (type: string) => {
-  switch (type) {
+  switch (type.toUpperCase()) {
     case 'BANK':
-      return 'Bank';
+      return 'Bank Account';
     case 'CREDIT_CARD':
       return 'Credit Card';
     case 'LOAN':
       return 'Loan';
     default:
-      return type;
+      return 'Account';
   }
 };
 
 export default function AccountsPage() {
+  // State for accounts data
+  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  
+  // Get API context
+  const api = useApi();
+  
+  // Fetch accounts data from API
+  useEffect(() => {
+    const fetchAccounts = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.get<Account[]>('/api/accounts');
+        
+        // Normalize data to ensure compatibility with the component
+        const normalizedData = data.map(account => ({
+          ...account,
+          // Ensure we have consistent property names between mock data and API
+          currentBalance: account.balance || account.currentBalance || 0,
+          // Default institution value if needed by the UI
+          institution: account.institution || ''
+        }));
+        
+        setAccounts(normalizedData);
+      } catch (err) {
+        console.error('Error fetching accounts:', err);
+        setError(err as Error);
+        // Fallback to mock data if API fails
+        setAccounts(mockAccounts);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchAccounts();
+  }, [api]);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   
@@ -89,6 +146,96 @@ export default function AccountsPage() {
   const loanBalance = accounts
     .filter(account => account.type === 'LOAN')
     .reduce((sum, account) => sum + account.currentBalance, 0);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Accounts</h1>
+        </div>
+        <div className="grid gap-4">
+          <p>Loading accounts...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Accounts</h1>
+        </div>
+        <div className="grid gap-4">
+          <p className="text-red-500">Error loading accounts: {error.message}</p>
+          <p>Showing fallback data</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render function for accounts table
+  const renderAccounts = () => {
+    if (filteredAccounts.length === 0) {
+      return (
+        <tr>
+          <td colSpan={5} className="h-24 text-center">
+            No accounts found. Try adjusting your filters or create a new account.
+          </td>
+        </tr>
+      );
+    }
+    
+    return filteredAccounts.map((account) => (
+      <tr key={account.id} className="border-b border-gray-100">
+        <td className="py-3 pl-4 pr-8">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-gray-50 p-2 text-black">
+              {getAccountTypeIcon(account.type)}
+            </div>
+            <div>
+              <div className="font-medium">{account.name}</div>
+              <div className="text-sm text-muted-foreground">
+                {account.institution || 'Personal'}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td className="py-3 px-4">{account.accountNumber || 'N/A'}</td>
+        <td className="py-3 px-4">{getAccountTypeName(account.type)}</td>
+        <td className="py-3 px-4">
+          {formatCurrency(account.currentBalance || account.balance || 0)}
+        </td>
+        <td className="py-3 px-4 text-right">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Link href={`/dashboard/accounts/${account.id}`} className="flex items-center">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  <span>View Account</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href={`/dashboard/accounts/${account.id}/edit`} className="flex items-center">
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit Account</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete Account</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </td>
+      </tr>
+    ));
+  };
 
   return (
     <div className="space-y-4 p-6">
@@ -204,93 +351,31 @@ export default function AccountsPage() {
           </div>
           
           {/* Accounts Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Account</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Institution</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Type</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Balance</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
-                  </th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAccounts.length === 0 ? (
+          <div className="rounded-md border">
+            <div className="relative w-full overflow-auto">
+              <table className="w-full caption-bottom text-sm">
+                <thead className="border-b bg-muted/50">
                   <tr>
-                    <td colSpan={5} className="h-12 px-4 text-center text-muted-foreground">
-                      No accounts found
-                    </td>
+                    <th className="h-12 px-4 text-left font-medium">Name</th>
+                    <th className="h-12 px-4 text-left font-medium">Account Number</th>
+                    <th className="h-12 px-4 text-left font-medium">Type</th>
+                    <th className="h-12 px-4 text-left font-medium">Balance</th>
+                    <th className="h-12 px-4 text-left font-medium"></th>
                   </tr>
-                ) : (
-                  filteredAccounts.map((account) => (
-                    <tr key={account.id} className="border-b hover:bg-muted/50">
-                      <td className="h-12 px-4 align-middle">
-                        <Link href={`/dashboard/accounts/${account.id}`} className="text-primary hover:underline">
-                          {account.name}
-                        </Link>
-                      </td>
-                      <td className="h-12 px-4 align-middle">{account.institution}</td>
-                      <td className="h-12 px-4 align-middle">
-                        <div className="flex items-center">
-                          {getAccountTypeIcon(account.type)}
-                          <span className="ml-2">{getAccountTypeName(account.type)}</span>
-                        </div>
-                      </td>
-                      <td className="h-12 px-4 align-middle font-medium">{formatCurrency(account.currentBalance)}</td>
-                      <td className="h-12 px-4 align-middle text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Open menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <ExternalLink className="mr-2 h-4 w-4" />
-                              <span>Connect Bank</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              <span>View Transactions</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                </thead>
+                <tbody>
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="h-24 text-center">
+                        <div className="flex justify-center items-center">Loading accounts...</div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    renderAccounts()
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>

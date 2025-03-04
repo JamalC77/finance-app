@@ -58,6 +58,30 @@ class ApiClient {
     
     return response.json();
   }
+
+  /**
+   * Make a DELETE request to the API
+   */
+  async delete<T>(endpoint: string, token?: string): Promise<T> {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      method: 'DELETE',
+      headers,
+    });
+    
+    if (!response.ok) {
+      throw await this.handleError(response);
+    }
+    
+    return response.json();
+  }
   
   /**
    * Handle error responses from the API
