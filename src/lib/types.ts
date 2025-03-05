@@ -87,6 +87,7 @@ export interface Invoice extends BaseEntity {
 export type ExpenseStatus = 'draft' | 'pending' | 'paid' | 'reimbursed' | 'cancelled';
 
 export interface Expense extends BaseEntity {
+  id: string;
   date: string;
   description: string;
   amount: number;
@@ -98,6 +99,7 @@ export interface Expense extends BaseEntity {
   paymentMethod?: string;
   receiptUrl?: string;
   notes?: string;
+  contact?: Contact;
 }
 
 // Contact types

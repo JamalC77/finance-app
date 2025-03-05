@@ -11,7 +11,7 @@ export async function getProfitLossReport(params: {
   comparisonEndDate?: string;
 }) {
   try {
-    const response = await apiClient.get('/reports/profit-loss', { params });
+    const response = await apiClient.get('/api/reports/profit-loss', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting profit and loss report:', error);
@@ -27,7 +27,7 @@ export async function getBalanceSheetReport(params: {
   comparisonDate?: string;
 }) {
   try {
-    const response = await apiClient.get('/reports/balance-sheet', { params });
+    const response = await apiClient.get('/api/reports/balance-sheet', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting balance sheet report:', error);
@@ -43,7 +43,7 @@ export async function getCashFlowReport(params: {
   endDate: string;
 }) {
   try {
-    const response = await apiClient.get('/reports/cash-flow', { params });
+    const response = await apiClient.get('/api/reports/cash-flow', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting cash flow report:', error);
@@ -59,7 +59,7 @@ export async function getAccountsReceivableReport(params: {
   agingPeriods?: number[];
 }) {
   try {
-    const response = await apiClient.get('/reports/accounts-receivable', { params });
+    const response = await apiClient.get('/api/reports/accounts-receivable', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting accounts receivable report:', error);
@@ -75,7 +75,7 @@ export async function getAccountsPayableReport(params: {
   agingPeriods?: number[];
 }) {
   try {
-    const response = await apiClient.get('/reports/accounts-payable', { params });
+    const response = await apiClient.get('/api/reports/accounts-payable', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting accounts payable report:', error);
@@ -92,7 +92,7 @@ export async function getTaxSummaryReport(params: {
   taxCategoryId?: string;
 }) {
   try {
-    const response = await apiClient.get('/reports/tax-summary', { params });
+    const response = await apiClient.get('/api/reports/tax-summary', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting tax summary report:', error);
@@ -114,7 +114,7 @@ export async function getCustomReport(params: {
   sortDirection?: 'asc' | 'desc';
 }) {
   try {
-    const response = await apiClient.get('/reports/custom', { params });
+    const response = await apiClient.get('/api/reports/custom', { params });
     return response.data;
   } catch (error) {
     console.error('Error getting custom report:', error);
@@ -132,7 +132,7 @@ export async function exportReport(data: {
   fileName?: string;
 }) {
   try {
-    const response = await apiClient.post('/reports/export', data, {
+    const response = await apiClient.post('/api/reports/export', data, {
       responseType: 'blob',
     });
     

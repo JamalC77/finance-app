@@ -15,7 +15,8 @@ import {
   HelpCircle,
   LogOut,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -67,6 +68,11 @@ const navItems = [
     href: '/dashboard/payments',
     label: 'Payments',
     icon: <CreditCard className="h-5 w-5" />,
+  },
+  {
+    href: '/dashboard/profile',
+    label: 'Profile',
+    icon: <User className="h-5 w-5" />,
   },
   {
     href: '/dashboard/settings',

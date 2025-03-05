@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -11,7 +11,8 @@ import {
   Receipt,
   Edit,
   Trash2,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +23,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { expenses, contacts, accounts } from '@/lib/mock-data';
+import { useToast } from '@/components/ui/use-toast';
+import { getExpenses } from '@/api/services/expenseService';
+import { Expense } from '@/lib/types';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -31,13 +34,14 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-const formatDate = (date: Date | null) => {
-  if (!date) return 'Not paid';
+const formatDate = (date: string | Date | null) => {
+  if (!date) return 'Not specified';
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
   return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  }).format(date);
+  }).format(dateObj);
 };
 
 const getStatusColor = (status: string) => {
@@ -52,37 +56,50 @@ const getStatusColor = (status: string) => {
 };
 
 const getCategoryLabel = (category: string) => {
+  if (!category) return 'Uncategorized';
   return category.split('_').map(word => 
     word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
   ).join(' ');
 };
 
 export default function ExpensesPage() {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+  
+  const fetchExpenses = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getExpenses();
+      setExpenses(data);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load expenses",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Get unique categories
-  const categories = [...new Set(expenses.map(expense => expense.category))];
-  
-  // Get contact and account names for expenses
-  const enrichedExpenses = expenses.map(expense => {
-    const contact = contacts.find(c => c.id === expense.contactId);
-    const account = accounts.find(a => a.id === expense.accountId);
-    return {
-      ...expense,
-      contactName: contact ? contact.name : 'Unknown',
-      accountName: account ? account.name : 'Unknown',
-      categoryLabel: getCategoryLabel(expense.category),
-    };
-  });
+  const categories = [...new Set(expenses.filter(e => e.category).map(expense => expense.category))];
   
   // Filter expenses based on search query, status and category
-  const filteredExpenses = enrichedExpenses.filter(expense => {
+  const filteredExpenses = expenses.filter(expense => {
     // Filter by search query
-    const matchesSearch = 
+    const matchesSearch = !searchQuery ? true :
       expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      expense.contactName.toLowerCase().includes(searchQuery.toLowerCase());
+      (expense.contactName || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     // Filter by status
     const matchesStatus = statusFilter ? expense.status === statusFilter : true;
@@ -101,6 +118,18 @@ export default function ExpensesPage() {
   const pendingAmount = filteredExpenses
     .filter(expense => expense.status === 'PENDING')
     .reduce((sum, expense) => sum + expense.amount, 0);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-[70vh] w-full items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading expenses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 p-6">
@@ -209,7 +238,7 @@ export default function ExpensesPage() {
                       key={category} 
                       onClick={() => setCategoryFilter(category)}
                     >
-                      {getCategoryLabel(category)}
+                      {getCategoryLabel(category || '')}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -254,39 +283,24 @@ export default function ExpensesPage() {
           </div>
           
           {/* Expenses Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full table-auto">
               <thead>
-                <tr className="border-b">
+                <tr className="bg-muted/50">
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Vendor</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
+                    Vendor
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Description</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
+                    Description
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Category</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
+                    Category
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Date</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
+                    Date
                   </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <span>Amount</span>
-                      <ArrowUpDown className="h-4 w-4" />
-                    </div>
+                    Amount
                   </th>
                   <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">Status</th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
@@ -303,14 +317,14 @@ export default function ExpensesPage() {
                   filteredExpenses.map((expense) => (
                     <tr key={expense.id} className="border-b hover:bg-muted/50">
                       <td className="h-12 px-4 align-middle font-medium">
-                        {expense.contactName}
+                        {expense.contactName || 'Not specified'}
                       </td>
                       <td className="h-12 px-4 align-middle">
                         <Link href={`/dashboard/expenses/${expense.id}`} className="text-primary hover:underline">
                           {expense.description}
                         </Link>
                       </td>
-                      <td className="h-12 px-4 align-middle">{expense.categoryLabel}</td>
+                      <td className="h-12 px-4 align-middle">{expense.category ? getCategoryLabel(expense.category) : 'Uncategorized'}</td>
                       <td className="h-12 px-4 align-middle">{formatDate(expense.date)}</td>
                       <td className="h-12 px-4 align-middle font-medium">{formatCurrency(expense.amount)}</td>
                       <td className="h-12 px-4 align-middle text-center">
@@ -327,22 +341,26 @@ export default function ExpensesPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Receipt className="mr-2 h-4 w-4" />
-                              <span>View Receipt</span>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/expenses/${expense.id}`}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                View Details
+                              </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              <span>View Details</span>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/expenses/${expense.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>Edit</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-red-600">
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
+                            {expense.receiptUrl && (
+                              <DropdownMenuItem
+                                onClick={() => window.open(expense.receiptUrl, '_blank')}
+                              >
+                                <Receipt className="mr-2 h-4 w-4" />
+                                View Receipt
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>

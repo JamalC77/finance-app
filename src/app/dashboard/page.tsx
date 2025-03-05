@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { 
   ArrowUpRight, 
   ArrowDownRight, 
@@ -19,10 +18,10 @@ import {
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, TooltipProps } from 'recharts';
-import { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useApi } from '@/lib/contexts/ApiContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 
 // Types for our data
 type Transaction = {
@@ -63,6 +62,33 @@ type Contact = {
   type: 'customer' | 'vendor' | 'both';
 };
 
+// Define specific types for arrays instead of using any[]
+type RecentActivity = {
+  id: string;
+  type: string;
+  description: string;
+  date: Date;
+  amount: number;
+};
+
+type CashFlowItem = {
+  month: string;
+  income: number;
+  expenses: number;
+  profit: number;
+};
+
+type CustomerItem = {
+  id: string;
+  name: string;
+  revenue: number;
+};
+
+type CategoryItem = {
+  category: string;
+  amount: number;
+};
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -101,27 +127,57 @@ export default function DashboardPage() {
     income: { mtd: 0, changePercentage: 0 },
     expenses: { mtd: 0, changePercentage: 0 },
     profitLoss: { mtd: 0, changePercentage: 0 },
-    recentActivity: [] as any[],
-    cashFlow: [] as any[],
-    topCustomers: [] as any[],
-    topExpenseCategories: [] as any[]
+    recentActivity: [] as RecentActivity[],
+    cashFlow: [] as CashFlowItem[],
+    topCustomers: [] as CustomerItem[],
+    topExpenseCategories: [] as CategoryItem[]
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   
-  const router = useRouter();
   const auth = useAuth();
   const api = useApi();
+  
+  // Load data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log('Dashboard component mounted, auth state:', auth.isAuthenticated ? 'authenticated' : 'not authenticated');
+      
+      if (auth.isAuthenticated) {
+        console.log('User is authenticated, proceeding with data loading');
+        
+        try {
+          setApiStatus('checking'); // Set status to checking
+          
+          // Load dashboard data directly
+          await loadDashboardData();
+          setApiStatus('connected'); // If we get here, we're connected
+          console.log('Dashboard data loaded successfully!');
+        } catch (error) {
+          console.error('Failed to load dashboard data:', error);
+          setApiStatus('error');
+          setError(error instanceof Error ? error : new Error('Unknown error occurred'));
+        }
+      } else {
+        console.log('User is not authenticated, skipping data load');
+      }
+    };
+
+    fetchData();
+  }, [auth.isAuthenticated]);
   
   // Function to load dashboard data
   const loadDashboardData = async () => {
     try {
       // If still loading auth or not authenticated, don't try to load data
       if (auth.isLoading || !auth.isAuthenticated) {
+        console.log('Auth not ready or not authenticated, skipping data load');
         return;
       }
 
       setIsLoading(true);
+      console.log('Starting to load dashboard data...');
       
       // Get current date and calculate date range
       const now = new Date();
@@ -143,49 +199,101 @@ export default function DashboardPage() {
         return date.toISOString().split('T')[0];
       };
 
-      // Load data in parallel using the new API context
-      const [
-        currentTransactions,
-        prevTransactions,
-        currentInvoices,
-        prevInvoices,
-        currentExpenses,
-        prevExpenses,
-        contacts
-      ] = await Promise.all([
-        // Current month transactions
-        api.get<Transaction[]>('/api/transactions', {
+      console.log('Preparing to fetch data from API...');
+      console.log('API BASE URL:', process.env.NEXT_PUBLIC_API_URL);
+      console.log('Auth token exists:', !!auth.token);
+
+      // Load each data type separately with error handling
+      let currentTransactions: Transaction[] = [];
+      let prevTransactions: Transaction[] = [];
+      let currentInvoices: Invoice[] = [];
+      let prevInvoices: Invoice[] = [];
+      let currentExpenses: Expense[] = [];
+      let prevExpenses: Expense[] = [];
+      let contacts: Contact[] = [];
+
+      try {
+        console.log('Fetching current transactions...');
+        currentTransactions = await api.get<Transaction[]>('/api/transactions', {
           startDate: formatApiDate(startDate),
           endDate: formatApiDate(endDate)
-        }),
-        // Previous month transactions
-        api.get<Transaction[]>('/api/transactions', {
+        });
+        console.log('Current transactions loaded:', currentTransactions.length);
+      } catch (error) {
+        console.error('Failed to load current transactions:', error);
+        // Continue with empty array
+      }
+
+      try {
+        console.log('Fetching previous transactions...');
+        prevTransactions = await api.get<Transaction[]>('/api/transactions', {
           startDate: formatApiDate(prevMonthStart),
           endDate: formatApiDate(prevMonthEnd)
-        }),
-        // Current month invoices
-        api.get<Invoice[]>('/api/invoices', {
+        });
+        console.log('Previous transactions loaded:', prevTransactions.length);
+      } catch (error) {
+        console.error('Failed to load previous transactions:', error);
+        // Continue with empty array
+      }
+
+      try {
+        console.log('Fetching current invoices...');
+        currentInvoices = await api.get<Invoice[]>('/api/invoices', {
           startDate: formatApiDate(startDate),
           endDate: formatApiDate(endDate)
-        }),
-        // Previous month invoices
-        api.get<Invoice[]>('/api/invoices', {
+        });
+        console.log('Current invoices loaded:', currentInvoices.length);
+      } catch (error) {
+        console.error('Failed to load current invoices:', error);
+        // Continue with empty array
+      }
+
+      try {
+        console.log('Fetching previous invoices...');
+        prevInvoices = await api.get<Invoice[]>('/api/invoices', {
           startDate: formatApiDate(prevMonthStart),
           endDate: formatApiDate(prevMonthEnd)
-        }),
-        // Current month expenses
-        api.get<Expense[]>('/api/expenses', {
+        });
+        console.log('Previous invoices loaded:', prevInvoices.length);
+      } catch (error) {
+        console.error('Failed to load previous invoices:', error);
+        // Continue with empty array
+      }
+
+      try {
+        console.log('Fetching current expenses...');
+        currentExpenses = await api.get<Expense[]>('/api/expenses', {
           startDate: formatApiDate(startDate),
           endDate: formatApiDate(endDate)
-        }),
-        // Previous month expenses
-        api.get<Expense[]>('/api/expenses', {
+        });
+        console.log('Current expenses loaded:', currentExpenses.length);
+      } catch (error) {
+        console.error('Failed to load current expenses:', error);
+        // Continue with empty array
+      }
+
+      try {
+        console.log('Fetching previous expenses...');
+        prevExpenses = await api.get<Expense[]>('/api/expenses', {
           startDate: formatApiDate(prevMonthStart),
           endDate: formatApiDate(prevMonthEnd)
-        }),
-        // All contacts
-        api.get<Contact[]>('/api/contacts')
-      ]);
+        });
+        console.log('Previous expenses loaded:', prevExpenses.length);
+      } catch (error) {
+        console.error('Failed to load previous expenses:', error);
+        // Continue with empty array
+      }
+
+      try {
+        console.log('Fetching contacts...');
+        contacts = await api.get<Contact[]>('/api/contacts');
+        console.log('Contacts loaded:', contacts.length);
+      } catch (error) {
+        console.error('Failed to load contacts:', error);
+        // Continue with empty array
+      }
+
+      console.log('All data fetched, calculating metrics...');
       
       // Calculate metrics
       
@@ -280,31 +388,80 @@ export default function DashboardPage() {
       
       // Generate cash flow data for the last 6 months
       const cashFlowData = [];
-      for (let i = 5; i >= 0; i--) {
-        const month = new Date(currentYear, currentMonth - i, 1);
-        const monthEnd = new Date(currentYear, currentMonth - i + 1, 0);
+      
+      // We'll need data for all months to display cash flow correctly
+      // Determine the last 6 months range
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+      sixMonthsAgo.setDate(1); // First day of the month
+      sixMonthsAgo.setHours(0, 0, 0, 0);
+      
+      console.log('Generating cash flow data for last 6 months starting from:', sixMonthsAgo.toISOString());
+      
+      // Fetch all invoices and expenses for the last 6 months in one go
+      let sixMonthInvoices: Invoice[] = [];
+      let sixMonthExpenses: Expense[] = [];
+      
+      try {
+        console.log('Fetching invoices for last 6 months...');
+        sixMonthInvoices = await api.get<Invoice[]>('/api/invoices', {
+          startDate: formatApiDate(sixMonthsAgo),
+          endDate: formatApiDate(endDate)
+        });
+        console.log('Six month invoices loaded:', sixMonthInvoices.length);
+      } catch (error) {
+        console.error('Failed to load six month invoices:', error);
+      }
+      
+      try {
+        console.log('Fetching expenses for last 6 months...');
+        sixMonthExpenses = await api.get<Expense[]>('/api/expenses', {
+          startDate: formatApiDate(sixMonthsAgo),
+          endDate: formatApiDate(endDate)
+        });
+        console.log('Six month expenses loaded:', sixMonthExpenses.length);
+      } catch (error) {
+        console.error('Failed to load six month expenses:', error);
+      }
+      
+      // Generate the cash flow data for each of the last 6 months
+      for (let i = 0; i < 6; i++) {
+        const monthDate = new Date();
+        monthDate.setMonth(monthDate.getMonth() - 5 + i);
+        monthDate.setDate(1);
+        monthDate.setHours(0, 0, 0, 0);
         
-        // Get the month name
-        const monthName = month.toLocaleString('default', { month: 'short' });
+        const monthStart = new Date(monthDate);
+        const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0, 23, 59, 59, 999);
         
-        // Calculate income for this month
-        const monthIncome = currentInvoices
+        const monthYear = monthDate.getFullYear();
+        
+        // Get the month name and add year if not current year
+        const monthName = monthDate.toLocaleString('default', { month: 'short' });
+        const formattedMonth = monthYear !== currentYear 
+          ? `${monthName} '${monthYear.toString().slice(2)}` 
+          : monthName;
+        
+        console.log(`Calculating cash flow for ${formattedMonth} (${monthStart.toISOString()} to ${monthEnd.toISOString()})`);
+        
+        // Calculate income for this month using the fetched data
+        const monthIncome = sixMonthInvoices
           .filter(invoice => {
             const invoiceDate = new Date(invoice.issueDate);
             return (
-              invoiceDate >= month && 
+              invoiceDate >= monthStart && 
               invoiceDate <= monthEnd && 
               invoice.status === 'paid'
             );
           })
           .reduce((sum, invoice) => sum + invoice.total, 0);
         
-        // Calculate expenses for this month
-        const monthExpenses = currentExpenses
+        // Calculate expenses for this month using the fetched data
+        const monthExpenses = sixMonthExpenses
           .filter(expense => {
             const expenseDate = new Date(expense.date);
             return (
-              expenseDate >= month && 
+              expenseDate >= monthStart && 
               expenseDate <= monthEnd && 
               expense.status === 'paid'
             );
@@ -312,11 +469,14 @@ export default function DashboardPage() {
           .reduce((sum, expense) => sum + expense.amount, 0);
         
         cashFlowData.push({
-          month: monthName,
+          month: formattedMonth,
           income: monthIncome,
-          expenses: monthExpenses
+          expenses: monthExpenses,
+          profit: monthIncome - monthExpenses
         });
       }
+      
+      console.log('Generated cash flow data:', cashFlowData);
       
       // Calculate top customers
       const customerInvoices = new Map();
@@ -393,17 +553,22 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err as Error);
       console.error('Error loading dashboard data:', err);
+      // Log details about which API call might have failed
+      if (err instanceof Error) {
+        console.error('Error message:', err.message);
+        console.error('Error stack:', err.stack);
+      }
+      
+      // Show user friendly toast notification
+      toast({
+        title: "Failed to load dashboard data",
+        description: "Please check your network connection and try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // Load data on component mount or when auth state changes
-  useEffect(() => {
-    if (auth.isAuthenticated) {
-      loadDashboardData();
-    }
-  }, [auth.isAuthenticated]);
   
   // Destructure dashboard data for easier access
   const { 
@@ -477,6 +642,25 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <div className="flex items-center space-x-2">
+          {apiStatus === 'error' && (
+            <Badge variant="destructive" className="mr-2">
+              API Disconnected
+            </Badge>
+          )}
+          {apiStatus === 'connected' && (
+            <Badge variant="outline" className="bg-green-100 text-green-800 mr-2">
+              API Connected
+            </Badge>
+          )}
+          {apiStatus === 'checking' && (
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-800 mr-2">
+              Checking API...
+            </Badge>
+          )}
+          <Button variant="outline" size="sm" onClick={() => loadDashboardData()}>
+            <ArrowUpRight className="mr-2 h-4 w-4" />
+            Refresh Data
+          </Button>
           <Button variant="outline" size="sm">
             <CalendarDays className="mr-2 h-4 w-4" />
             Last 30 Days
@@ -579,7 +763,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Cash Flow</CardTitle>
             <CardDescription>
-              Your income and expenses over the last 6 months
+              Your income, expenses, and profit over the last 6 months
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -606,6 +790,12 @@ export default function DashboardPage() {
                     dataKey="expenses" 
                     name="Expenses" 
                     fill="#f43f5e" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                  <Bar 
+                    dataKey="profit" 
+                    name="Profit" 
+                    fill="#10b981" 
                     radius={[4, 4, 0, 0]} 
                   />
                 </RechartsBarChart>
@@ -726,42 +916,42 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Button asChild variant="outline" className="h-20 justify-start px-4">
-          <Link href="/dashboard/invoices/new">
+        <Link href="/dashboard/invoices/new" passHref className="block">
+          <Button variant="outline" className="h-20 justify-start px-4 w-full">
             <FileText className="mr-3 h-5 w-5 text-primary" />
             <div className="flex flex-col items-start text-left">
               <span className="text-sm font-medium">New Invoice</span>
               <span className="text-xs text-muted-foreground">Create a new invoice</span>
             </div>
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-20 justify-start px-4">
-          <Link href="/dashboard/expenses/new">
+          </Button>
+        </Link>
+        <Link href="/dashboard/expenses/new" passHref className="block">
+          <Button variant="outline" className="h-20 justify-start px-4 w-full">
             <Receipt className="mr-3 h-5 w-5 text-primary" />
             <div className="flex flex-col items-start text-left">
               <span className="text-sm font-medium">Add Expense</span>
               <span className="text-xs text-muted-foreground">Record a new expense</span>
             </div>
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-20 justify-start px-4">
-          <Link href="/dashboard/reports">
+          </Button>
+        </Link>
+        <Link href="/dashboard/reports" passHref className="block">
+          <Button variant="outline" className="h-20 justify-start px-4 w-full">
             <BarChart className="mr-3 h-5 w-5 text-primary" />
             <div className="flex flex-col items-start text-left">
               <span className="text-sm font-medium">View Reports</span>
               <span className="text-xs text-muted-foreground">Financial insights</span>
             </div>
-          </Link>
-        </Button>
-        <Button asChild variant="outline" className="h-20 justify-start px-4">
-          <Link href="/dashboard/contacts/new">
+          </Button>
+        </Link>
+        <Link href="/dashboard/contacts/new" passHref className="block">
+          <Button variant="outline" className="h-20 justify-start px-4 w-full">
             <DollarSign className="mr-3 h-5 w-5 text-primary" />
             <div className="flex flex-col items-start text-left">
               <span className="text-sm font-medium">Add Contact</span>
               <span className="text-xs text-muted-foreground">Create a new contact</span>
             </div>
-          </Link>
-        </Button>
+          </Button>
+        </Link>
       </div>
     </div>
   );

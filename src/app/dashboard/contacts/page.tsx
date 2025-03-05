@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Plus, 
@@ -13,7 +13,8 @@ import {
   Edit,
   Trash2,
   UserCircle,
-  Building
+  Building,
+  AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +25,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { contacts } from '@/lib/mock-data';
+import { getContacts } from '@/api/services/contactService';
+import { Skeleton } from '@/components/ui/skeleton';
+// Import mock data as fallback
+import { contacts as mockContacts } from '@/lib/mock-data';
 
 const getContactTypeIcon = (type: string) => {
   switch (type) {
@@ -40,19 +44,53 @@ const getContactTypeIcon = (type: string) => {
 export default function ContactsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [usingMockData, setUsingMockData] = useState(false);
   
-  // Filter contacts based on search query and type
+  // Fetch contacts on component mount
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        setLoading(true);
+        const filters: any = {};
+        
+        if (typeFilter) {
+          filters.type = typeFilter;
+        }
+        
+        const data = await getContacts(filters);
+        setContacts(data);
+        setError(null);
+        setUsingMockData(false);
+      } catch (err) {
+        console.error('Error fetching contacts:', err);
+        // Fall back to mock data
+        let filtered = [...mockContacts];
+        if (typeFilter) {
+          filtered = mockContacts.filter(c => c.type === typeFilter);
+        }
+        setContacts(filtered);
+        setUsingMockData(true);
+        setError('Unable to connect to API. Using mock data temporarily.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContacts();
+  }, [typeFilter]);
+  
+  // Filter contacts based on search query
   const filteredContacts = contacts.filter(contact => {
     // Filter by search query
     const matchesSearch = 
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.phone.toLowerCase().includes(searchQuery.toLowerCase());
+      contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.phone?.toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Filter by type
-    const matchesType = typeFilter ? contact.type === typeFilter : true;
-    
-    return matchesSearch && matchesType;
+    return matchesSearch;
   });
   
   // Get counts
@@ -79,10 +117,16 @@ export default function ContactsPage() {
             <CardTitle className="text-sm font-medium">All Contacts</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total people and businesses
-            </p>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalCount}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total people and businesses
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         
@@ -91,10 +135,16 @@ export default function ContactsPage() {
             <CardTitle className="text-sm font-medium">Customers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{customerCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              People who buy from you
-            </p>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-blue-600">{customerCount}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  People who buy from you
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
         
@@ -103,10 +153,16 @@ export default function ContactsPage() {
             <CardTitle className="text-sm font-medium">Vendors</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{vendorCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              People you buy from
-            </p>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-purple-600">{vendorCount}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  People you buy from
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -120,6 +176,21 @@ export default function ContactsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {usingMockData && (
+            <div className="flex items-center gap-2 p-4 mb-4 bg-amber-50 text-amber-700 rounded-md">
+              <AlertCircle className="h-5 w-5" />
+              <p>Using mock data. API connection unavailable.</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-auto" 
+                onClick={() => window.location.reload()}
+              >
+                Retry Connection
+              </Button>
+            </div>
+          )}
+        
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
             <div className="flex items-center gap-2 w-full md:w-auto">
               <div className="relative flex-1">
@@ -172,6 +243,21 @@ export default function ContactsPage() {
           
           {/* Contacts Table */}
           <div className="overflow-x-auto">
+            {error && !usingMockData && (
+              <div className="flex items-center gap-2 p-4 mb-4 bg-red-50 text-red-700 rounded-md">
+                <AlertCircle className="h-5 w-5" />
+                <p>{error}</p>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="ml-auto" 
+                  onClick={() => window.location.reload()}
+                >
+                  Retry
+                </Button>
+              </div>
+            )}
+            
             <table className="w-full">
               <thead>
                 <tr className="border-b">
@@ -199,13 +285,31 @@ export default function ContactsPage() {
                       <ArrowUpDown className="h-4 w-4" />
                     </div>
                   </th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <span>ID</span>
+                      <ArrowUpDown className="h-4 w-4" />
+                    </div>
+                  </th>
                   <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredContacts.length === 0 ? (
+                {loading ? (
+                  // Show skeleton loader while loading
+                  Array(5).fill(0).map((_, index) => (
+                    <tr key={index} className="border-b">
+                      <td className="h-12 px-4 align-middle"><Skeleton className="h-4 w-32" /></td>
+                      <td className="h-12 px-4 align-middle"><Skeleton className="h-4 w-20" /></td>
+                      <td className="h-12 px-4 align-middle"><Skeleton className="h-4 w-40" /></td>
+                      <td className="h-12 px-4 align-middle"><Skeleton className="h-4 w-24" /></td>
+                      <td className="h-12 px-4 align-middle"><Skeleton className="h-4 w-16" /></td>
+                      <td className="h-12 px-4 align-middle text-right"><Skeleton className="h-8 w-8 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : filteredContacts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="h-12 px-4 text-center text-muted-foreground">
+                    <td colSpan={6} className="h-12 px-4 text-center text-muted-foreground">
                       No contacts found
                     </td>
                   </tr>
@@ -223,8 +327,11 @@ export default function ContactsPage() {
                           <span className="ml-2">{contact.type === 'CUSTOMER' ? 'Customer' : 'Vendor'}</span>
                         </div>
                       </td>
-                      <td className="h-12 px-4 align-middle">{contact.email}</td>
-                      <td className="h-12 px-4 align-middle">{contact.phone}</td>
+                      <td className="h-12 px-4 align-middle">{contact.email || '-'}</td>
+                      <td className="h-12 px-4 align-middle">{contact.phone || '-'}</td>
+                      <td className="h-12 px-4 align-middle">
+                        <code className="bg-muted px-1 py-0.5 rounded text-xs">{contact.id}</code>
+                      </td>
                       <td className="h-12 px-4 align-middle text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -238,9 +345,11 @@ export default function ContactsPage() {
                               <Mail className="mr-2 h-4 w-4" />
                               <span>Send Email</span>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              <span>View Details</span>
+                            <DropdownMenuItem asChild>
+                              <Link href={`/dashboard/contacts/${contact.id}`}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                <span>View Details</span>
+                              </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Edit className="mr-2 h-4 w-4" />

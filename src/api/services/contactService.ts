@@ -8,7 +8,7 @@ export async function getContacts(filters?: {
   isActive?: boolean;
 }) {
   try {
-    const response = await apiClient.get('/contacts', { params: filters });
+    const response = await apiClient.get('/api/contacts', { params: filters });
     return response.data;
   } catch (error) {
     console.error('Error fetching contacts:', error);
@@ -21,7 +21,7 @@ export async function getContacts(filters?: {
  */
 export async function getContact(id: string) {
   try {
-    const response = await apiClient.get(`/contacts/${id}`);
+    const response = await apiClient.get(`/api/contacts/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching contact ${id}:`, error);
@@ -34,7 +34,7 @@ export async function getContact(id: string) {
  */
 export async function createContact(contactData: any) {
   try {
-    const response = await apiClient.post('/contacts', contactData);
+    const response = await apiClient.post('/api/contacts', contactData);
     return response.data;
   } catch (error) {
     console.error('Error creating contact:', error);
@@ -47,7 +47,7 @@ export async function createContact(contactData: any) {
  */
 export async function updateContact(id: string, contactData: any) {
   try {
-    const response = await apiClient.put(`/contacts/${id}`, contactData);
+    const response = await apiClient.put(`/api/contacts/${id}`, contactData);
     return response.data;
   } catch (error) {
     console.error(`Error updating contact ${id}:`, error);
@@ -60,7 +60,7 @@ export async function updateContact(id: string, contactData: any) {
  */
 export async function deleteContact(id: string) {
   try {
-    const response = await apiClient.delete(`/contacts/${id}`);
+    const response = await apiClient.delete(`/api/contacts/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting contact ${id}:`, error);

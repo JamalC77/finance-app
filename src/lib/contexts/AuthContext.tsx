@@ -13,6 +13,32 @@ export type User = {
   name: string;
   email: string;
   role?: string;
+  // Extended profile information from metadata
+  metadata?: {
+    profile?: {
+      firstName?: string;
+      lastName?: string;
+      phone?: string;
+      jobTitle?: string;
+      company?: string;
+      bio?: string;
+      address?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+      website?: string;
+      twitter?: string;
+      linkedin?: string;
+    };
+    preferences?: {
+      dateFormat?: string;
+      timeZone?: string;
+      twoFactorEnabled?: boolean;
+      emailNotifications?: boolean;
+      appNotifications?: boolean;
+    };
+  };
 };
 
 export type AuthContextType = {
@@ -71,17 +97,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               throw new Error('Token expired');
             }
             
-            // Set the token and user data
+            // Set the token
             setToken(storedToken);
             
-            // You might want to make an API call to get fresh user data
-            // For now, we'll extract basic info from the token
-            setUser({
-              id: decoded.sub as string,
-              name: decoded.name as string,
-              email: decoded.email as string,
-              role: decoded.role as string,
-            });
+            // Fetch the latest user data from the API
+            try {
+              console.log('Fetching user data from API...');
+              const response = await apiService.get('/api/users/me');
+              
+              if (response && response.user) {
+                console.log('User data retrieved from API:', response.user);
+                setUser(response.user);
+              } else {
+                // Fallback to token data if API call fails
+                console.log('API did not return user data, using token data');
+                setUser({
+                  id: decoded.sub as string,
+                  name: decoded.name as string,
+                  email: decoded.email as string,
+                  role: decoded.role as string,
+                });
+              }
+            } catch (apiError) {
+              console.error('Error fetching user data from API:', apiError);
+              // Fallback to token data
+              setUser({
+                id: decoded.sub as string,
+                name: decoded.name as string,
+                email: decoded.email as string,
+                role: decoded.role as string,
+              });
+            }
           } catch (error) {
             console.error('Invalid token', error);
             localStorage.removeItem('financeAppToken');
@@ -185,19 +231,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Function to manually set user data (useful for testing/development)
   const setUserData = (data: User) => {
+    console.log('Setting user data in AuthContext:', data);
     setUser(data);
   };
 
   // Debug bypass function to set a mock token and user
   const bypassAuth = () => {
     // Create a mock token that won't expire for 24 hours
-    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZXYtdXNlci1pZCIsIm5hbWUiOiJEZXZlbG9wbWVudCBVc2VyIiwiZW1haWwiOiJkZXZAZXhhbXBsZS5jb20iLCJyb2xlIjoiQURNSU4iLCJvcmdhbml6YXRpb25JZCI6ImRldi1vcmctaWQiLCJpYXQiOjE2MDk0NTkwMDAsImV4cCI6OTk5OTk5OTk5OX0.bTRrT1d0QWtQeDEyM3dlZXdnRGRrM2VyZHphUVphdXdm';
+    // Note: sub claim is set to "user-1" to match our API implementation
+    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEiLCJuYW1lIjoiRGVtbyBVc2VyIiwiZW1haWwiOiJkZW1vQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwib3JnYW5pemF0aW9uSWQiOiJvcmctMSIsImlhdCI6MTYwOTQ1OTAwMCwiZXhwIjo5OTk5OTk5OTk5fQ.abcdefghijklmnopqrstuvwxyz1234567890';
     
-    // Set mock user
+    // Set mock user (matches our API implementation)
     const mockUser = {
-      id: 'dev-user-id',
-      name: 'Development User',
-      email: 'dev@example.com',
+      id: 'user-1',
+      name: 'Demo User',
+      email: 'demo@example.com',
+      organizationId: 'org-1',
+      organizationName: 'Demo Organization',
       role: 'ADMIN'
     };
     
