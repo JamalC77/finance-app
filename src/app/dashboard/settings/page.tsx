@@ -11,8 +11,10 @@ import {
   Bell, 
   Lock, 
   HelpCircle,
-  Save
+  Save,
+  Link2
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -282,6 +284,13 @@ export default function SettingsPage() {
                   <FileText className="mr-2 h-4 w-4" />
                   <span>Tax Settings</span>
                 </a>
+                <Link 
+                  href="/settings/integrations" 
+                  className="flex items-center px-4 py-3 border-l-2 border-transparent hover:bg-muted/50"
+                >
+                  <Link2 className="mr-2 h-4 w-4" />
+                  <span>Integrations</span>
+                </Link>
                 <a href="#preferences" className="flex items-center px-4 py-3 border-l-2 border-transparent hover:bg-muted/50">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Preferences</span>
