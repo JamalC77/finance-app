@@ -1,11 +1,11 @@
-# Finance App Frontend
+# CFO Line Frontend
 
-This is the frontend for the Finance App, built with Next.js.
+This is the frontend for CFO Line, built with Next.js.
 
 ## Project Structure
 
 ```
-finance-app/
+cfo-line/
 ├── src/
 │   ├── app/             # Next.js app router
 │   ├── components/      # React components

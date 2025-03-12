@@ -73,7 +73,7 @@ export function AppNavbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-64">
               <SheetHeader className="border-b pb-4 mb-4">
-                <SheetTitle>Finance App</SheetTitle>
+                <SheetTitle>CFO Line</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col space-y-3">
                 <Link 
@@ -118,7 +118,7 @@ export function AppNavbar() {
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2">
             <DollarSign className="h-6 w-6 text-primary" />
-            <span className="font-bold hidden md:inline-block">Finance App</span>
+            <span className="font-bold hidden md:inline-block">CFO Line</span>
           </Link>
 
           {/* Desktop navigation */}
@@ -162,7 +162,7 @@ export function AppNavbar() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full">
                 <Avatar>
-                  <AvatarImage src={auth.user?.avatar || ''} alt={auth.user?.name || 'User'} />
+                  <AvatarImage src="" alt={auth.user?.name || 'User'} />
                   <AvatarFallback>{userInitials}</AvatarFallback>
                 </Avatar>
               </Button>

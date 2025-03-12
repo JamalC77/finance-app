@@ -1,7 +1,6 @@
 'use client';
 
 import './globals.css';
-import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { OnboardingProvider } from '@/lib/contexts/OnboardingContext';
@@ -18,8 +17,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Finance App</title>
-        <meta name="description" content="Complete financial management for small businesses" />
+        <title>CFO Line</title>
+        <meta name="description" content="Connect your QuickBooks data to build powerful financial models and deliver better insights to your clients" />
       </head>
       <body className={inter.className}>
         <ThemeProvider

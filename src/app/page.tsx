@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/contexts/AuthContext';
-import { Landmark, ArrowRight, BarChart, DollarSign, CreditCard } from 'lucide-react';
+import { Database, ArrowRight, BarChart, DollarSign, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -25,9 +25,9 @@ export default function Home() {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <Landmark className="h-16 w-16 text-primary" />
+            <Database className="h-16 w-16 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-4">Finance App</h1>
+          <h1 className="text-3xl font-bold mb-4">CFO Line</h1>
           <p className="text-lg text-muted-foreground mb-8">Loading application...</p>
         </div>
       </div>
@@ -43,8 +43,8 @@ export default function Home() {
       <header className="bg-background border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <Landmark className="h-8 w-8 text-primary mr-2" />
-            <span className="text-xl font-bold">Finance App</span>
+            <Database className="h-8 w-8 text-primary mr-2" />
+            <span className="text-xl font-bold">CFO Line</span>
           </div>
           <div className="flex items-center space-x-4">
             <Link href="/auth/login">
@@ -62,10 +62,10 @@ export default function Home() {
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-6xl text-center">
             <h1 className="text-5xl font-bold leading-tight mb-6">
-              Manage Your Finances with Ease
+              Transform QuickBooks Data Into Powerful Insights
             </h1>
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              A powerful financial management platform designed for individuals and businesses to track expenses, create invoices, and gain insights into your financial health.
+              CFO Line connects seamlessly with QuickBooks to process your financial data and build sophisticated data models that help you deliver better insights to your clients.
             </p>
             <div className="flex justify-center space-x-4">
               <Link href="/auth/register">
@@ -92,39 +92,39 @@ export default function Home() {
               <Card>
                 <CardHeader>
                   <DollarSign className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Invoice Management</CardTitle>
+                  <CardTitle>QuickBooks Integration</CardTitle>
                   <CardDescription>
-                    Create and send professional invoices to your clients.
+                    Seamless connection with your QuickBooks account.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Track payments, send reminders, and manage your accounts receivable all in one place.</p>
+                  <p>Automatically sync your financial data from QuickBooks and keep everything up-to-date in real-time.</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
                   <CreditCard className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Expense Tracking</CardTitle>
+                  <CardTitle>Advanced Data Modeling</CardTitle>
                   <CardDescription>
-                    Keep track of all your business and personal expenses.
+                    Transform raw financial data into meaningful insights.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Categorize expenses, upload receipts, and manage your spending habits efficiently.</p>
+                  <p>Our sophisticated algorithms analyze your QuickBooks data to create custom financial models tailored to your clients&apos; needs.</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
                   <BarChart className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Financial Reports</CardTitle>
+                  <CardTitle>Client-Ready Reports</CardTitle>
                   <CardDescription>
-                    Get insights into your financial performance.
+                    Present professional insights to your clients.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Generate cash flow, profit & loss, and other reports to make informed business decisions.</p>
+                  <p>Generate beautiful, customizable reports that help your clients understand their financial position and make better decisions.</p>
                 </CardContent>
               </Card>
             </div>
@@ -134,9 +134,9 @@ export default function Home() {
         {/* CTA Section */}
         <section className="py-20 px-4 text-center">
           <div className="container mx-auto max-w-3xl">
-            <h2 className="text-3xl font-bold mb-6">Ready to Take Control of Your Finances?</h2>
+            <h2 className="text-3xl font-bold mb-6">Ready to Elevate Your Financial Services?</h2>
             <p className="text-xl text-muted-foreground mb-10">
-              Join thousands of users who are managing their finances more effectively with our platform.
+              Join accounting professionals who use CFO Line to deliver deeper insights and more value to their clients.
             </p>
             <Link href="/auth/register">
               <Button size="lg" className="text-lg px-8">
@@ -152,11 +152,19 @@ export default function Home() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-6 md:mb-0">
-              <Landmark className="h-6 w-6 text-primary mr-2" />
-              <span className="font-bold">Finance App</span>
+              <Database className="h-6 w-6 text-primary mr-2" />
+              <span className="font-bold">CFO Line</span>
+            </div>
+            <div className="flex space-x-6 mb-6 md:mb-0">
+              <Link href="/privacy-policy" className="text-sm hover:underline">
+                Privacy Policy
+              </Link>
+              <Link href="/eula" className="text-sm hover:underline">
+                EULA
+              </Link>
             </div>
             <div className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} Finance App. All rights reserved.
+              &copy; {new Date().getFullYear()} CFO Line. All rights reserved.
             </div>
           </div>
         </div>
