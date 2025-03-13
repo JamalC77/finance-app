@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useApi } from '@/lib/api/ApiContext';
+import { useApi } from '@/lib/contexts/ApiContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader2, CheckCircle2, FileText, Home } from 'lucide-react';
@@ -12,7 +12,7 @@ import confetti from 'canvas-confetti';
 export default function PaymentSuccessPage() {
   const params = useParams();
   const router = useRouter();
-  const { api } = useApi();
+  const api = useApi();
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

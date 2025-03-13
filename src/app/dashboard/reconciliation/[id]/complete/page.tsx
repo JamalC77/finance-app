@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { reconciliationApi } from '@/lib/api';
+import { useApi } from '@/lib/contexts/ApiContext';
 import { ReconciliationStatement, ReconciliationSummary } from '@/lib/types';
 
 interface PageProps {
@@ -49,6 +49,8 @@ export default function CompletionPage({ params }: PageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  const api = useApi();
+  
   // Fetch the statement and summary data
   useEffect(() => {
     const fetchData = async () => {
@@ -57,7 +59,7 @@ export default function CompletionPage({ params }: PageProps) {
       
       try {
         // Fetch the statement details
-        const statementData = await reconciliationApi.getStatement(id);
+        const statementData = await api.get(`/api/reconciliation/statements/${id}`);
         setStatement(statementData);
         
         // Calculate summary
@@ -82,7 +84,7 @@ export default function CompletionPage({ params }: PageProps) {
     };
     
     fetchData();
-  }, [id]);
+  }, [id, api]);
   
   const handlePrint = () => {
     window.print();

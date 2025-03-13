@@ -78,7 +78,7 @@ export default function ExpensesPage() {
     try {
       setIsLoading(true);
       const data = await getExpenses();
-      setExpenses(data);
+      setExpenses(data || []);
     } catch (error) {
       console.error('Error fetching expenses:', error);
       toast({
@@ -86,19 +86,20 @@ export default function ExpensesPage() {
         description: "Failed to load expenses",
         variant: "destructive"
       });
+      setExpenses([]);
     } finally {
       setIsLoading(false);
     }
   };
   
   // Get unique categories
-  const categories = [...new Set(expenses.filter(e => e.category).map(expense => expense.category))];
+  const categories = [...new Set((expenses || []).filter(e => e.category).map(expense => expense.category))];
   
   // Filter expenses based on search query, status and category
-  const filteredExpenses = expenses.filter(expense => {
+  const filteredExpenses = (expenses || []).filter(expense => {
     // Filter by search query
     const matchesSearch = !searchQuery ? true :
-      expense.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (expense.contactName || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     // Filter by status

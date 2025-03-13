@@ -61,7 +61,7 @@ export default function ContactsPage() {
         }
         
         const data = await getContacts(filters);
-        setContacts(data);
+        setContacts(data || []);
         setError(null);
         setUsingMockData(false);
       } catch (err) {
@@ -71,7 +71,7 @@ export default function ContactsPage() {
         if (typeFilter) {
           filtered = mockContacts.filter(c => c.type === typeFilter);
         }
-        setContacts(filtered);
+        setContacts(filtered || []);
         setUsingMockData(true);
         setError('Unable to connect to API. Using mock data temporarily.');
       } finally {
@@ -83,7 +83,7 @@ export default function ContactsPage() {
   }, [typeFilter]);
   
   // Filter contacts based on search query
-  const filteredContacts = contacts.filter(contact => {
+  const filteredContacts = (contacts || []).filter(contact => {
     // Filter by search query
     const matchesSearch = 
       contact.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||

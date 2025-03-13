@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { 
   ArrowUpRight, 
@@ -139,36 +139,8 @@ export default function DashboardPage() {
   const auth = useAuth();
   const api = useApi();
   
-  // Load data on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log('Dashboard component mounted, auth state:', auth.isAuthenticated ? 'authenticated' : 'not authenticated');
-      
-      if (auth.isAuthenticated) {
-        console.log('User is authenticated, proceeding with data loading');
-        
-        try {
-          setApiStatus('checking'); // Set status to checking
-          
-          // Load dashboard data directly
-          await loadDashboardData();
-          setApiStatus('connected'); // If we get here, we're connected
-          console.log('Dashboard data loaded successfully!');
-        } catch (error) {
-          console.error('Failed to load dashboard data:', error);
-          setApiStatus('error');
-          setError(error instanceof Error ? error : new Error('Unknown error occurred'));
-        }
-      } else {
-        console.log('User is not authenticated, skipping data load');
-      }
-    };
-
-    fetchData();
-  }, [auth.isAuthenticated]);
-  
-  // Function to load dashboard data
-  const loadDashboardData = async () => {
+  // Function to load dashboard data - memoized with useCallback
+  const loadDashboardData = useCallback(async () => {
     try {
       // If still loading auth or not authenticated, don't try to load data
       if (auth.isLoading || !auth.isAuthenticated) {
@@ -568,7 +540,35 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [auth.isAuthenticated, auth.isLoading, auth.token, api]);
+  
+  // Load data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log('Dashboard component mounted, auth state:', auth.isAuthenticated ? 'authenticated' : 'not authenticated');
+      
+      if (auth.isAuthenticated) {
+        console.log('User is authenticated, proceeding with data loading');
+        
+        try {
+          setApiStatus('checking'); // Set status to checking
+          
+          // Load dashboard data
+          await loadDashboardData();
+          setApiStatus('connected'); // If we get here, we're connected
+          console.log('Dashboard data loaded successfully!');
+        } catch (error) {
+          console.error('Failed to load dashboard data:', error);
+          setApiStatus('error');
+          setError(error instanceof Error ? error : new Error('Unknown error occurred'));
+        }
+      } else {
+        console.log('User is not authenticated, skipping data load');
+      }
+    };
+
+    fetchData();
+  }, [loadDashboardData]); // Depend on the memoized loadDashboardData function
   
   // Destructure dashboard data for easier access
   const { 

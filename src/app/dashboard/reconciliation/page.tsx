@@ -6,10 +6,11 @@ import { PlusCircle, FileText, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatementCard } from '@/components/reconciliation/StatementCard';
-import { reconciliationApi } from '@/lib/api';
+import { useApi } from '@/lib/contexts/ApiContext';
 import { ReconciliationStatement } from '@/lib/types';
 
 export default function ReconciliationPage() {
+  const api = useApi();
   const [statements, setStatements] = useState<ReconciliationStatement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +20,8 @@ export default function ReconciliationPage() {
     setError(null);
     
     try {
-      const data = await reconciliationApi.getStatements();
-      setStatements(data);
+      const response = await api.get('/api/reconciliation/statements');
+      setStatements(response.data);
     } catch (err) {
       console.error('Error fetching statements:', err);
       setError('Failed to load reconciliation statements');

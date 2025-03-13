@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useRef, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 // Define types for our API context
@@ -9,12 +9,16 @@ type ApiState = {
   error: Error | null;
 };
 
-export type ApiContextType = ApiState & {
-  get: <T>(url: string, params?: Record<string, any>) => Promise<T>;
-  post: <T>(url: string, data?: any) => Promise<T>;
-  put: <T>(url: string, data: any) => Promise<T>;
-  patch: <T>(url: string, data: any) => Promise<T>;
+// Define the API client interface
+interface ApiClient {
+  get: <T>(url: string, params?: Record<string, unknown>) => Promise<T>;
+  post: <T>(url: string, data?: unknown, config?: RequestInit) => Promise<T>;
+  put: <T>(url: string, data: unknown) => Promise<T>;
+  patch: <T>(url: string, data: unknown) => Promise<T>;
   delete: <T>(url: string) => Promise<T>;
+}
+
+export type ApiContextType = ApiState & ApiClient & {
   clearError: () => void;
 };
 
@@ -24,6 +28,156 @@ const ApiContext = createContext<ApiContextType | undefined>(undefined);
 // Base URL from environment variable
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Create a singleton API client factory
+class ApiClientFactory {
+  private static instance: ApiClientFactory;
+  private clients: Map<string, ApiClient> = new Map();
+  // Use any here because we store promises of different types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private pendingRequests: Map<string, Promise<any>> = new Map();
+
+  private constructor() {}
+
+  public static getInstance(): ApiClientFactory {
+    if (!ApiClientFactory.instance) {
+      ApiClientFactory.instance = new ApiClientFactory();
+    }
+    return ApiClientFactory.instance;
+  }
+
+  public getClient(tokenGetter: () => string | null): ApiClient {
+    // Use a unique key for each token getter
+    const key = 'client';
+    
+    if (!this.clients.has(key)) {
+      this.clients.set(key, this.createClient(tokenGetter));
+    }
+    
+    return this.clients.get(key)!;
+  }
+
+  private createClient(tokenGetter: () => string | null): ApiClient {
+    // Helper method to build request options with authentication
+    const buildRequestOptions = (method: string, data?: unknown, config: RequestInit = {}): RequestInit => {
+      const options: RequestInit = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...config.headers,
+        },
+        ...config,
+      };
+
+      // Add authentication header if we have a token
+      const token = tokenGetter();
+      if (token) {
+        options.headers = {
+          ...options.headers,
+          'Authorization': `Bearer ${token}`,
+        };
+      }
+
+      // Add body for methods that support it
+      if (data && ['POST', 'PUT', 'PATCH'].includes(method) && !options.body) {
+        options.body = JSON.stringify(data);
+      }
+
+      return options;
+    };
+
+    // Generate a unique key for requests to enable deduplication
+    const getRequestKey = (url: string, options: RequestInit): string => {
+      return `${options.method}:${url}:${options.body ? JSON.stringify(options.body) : ''}`;
+    };
+
+    // Common fetch handler with error handling and request deduplication
+    const fetchHandler = async <T,>(url: string, options: RequestInit): Promise<T> => {
+      try {
+        // Ensure we're using the full URL
+        const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
+        
+        // Create a unique key for this request to deduplicate
+        const requestKey = getRequestKey(fullUrl, options);
+        
+        // Check if there's already a pending request for this exact URL/method/body
+        if (this.pendingRequests.has(requestKey)) {
+          console.log('Returning pending request:', requestKey);
+          return this.pendingRequests.get(requestKey)!;
+        }
+        
+        // Create the new request promise
+        const fetchPromise = (async () => {
+          try {
+            // Make the request
+            console.log('Making fetch request:', requestKey);
+            const response = await fetch(fullUrl, options);
+            
+            // Handle non-200 responses
+            if (!response.ok) {
+              // Try to parse error message from the response
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.message || `Request failed with status ${response.status}`);
+            }
+            
+            // Parse the JSON response
+            const data = await response.json();
+            
+            // Return successful response
+            return data as T;
+          } finally {
+            // Clean up the pending request when done (whether success or error)
+            this.pendingRequests.delete(requestKey);
+          }
+        })();
+        
+        // Store the pending request
+        this.pendingRequests.set(requestKey, fetchPromise);
+        
+        // Return the promise
+        return fetchPromise;
+      } catch (error) {
+        throw error;
+      }
+    };
+
+    return {
+      get: <T,>(url: string, params?: Record<string, unknown>): Promise<T> => {
+        const queryString = params 
+          ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
+          : '';
+        return fetchHandler<T>(`${url}${queryString}`, buildRequestOptions('GET'));
+      },
+
+      post: <T,>(url: string, data?: unknown, config?: RequestInit): Promise<T> => {
+        return fetchHandler<T>(url, buildRequestOptions('POST', data, config));
+      },
+
+      put: <T,>(url: string, data: unknown): Promise<T> => {
+        return fetchHandler<T>(url, buildRequestOptions('PUT', data));
+      },
+
+      patch: <T,>(url: string, data: unknown): Promise<T> => {
+        return fetchHandler<T>(url, buildRequestOptions('PATCH', data));
+      },
+
+      delete: <T,>(url: string): Promise<T> => {
+        return fetchHandler<T>(url, buildRequestOptions('DELETE'));
+      },
+    };
+  }
+}
+
+// Get the singleton factory instance
+const apiClientFactory = ApiClientFactory.getInstance();
+
+// Create a standalone API service for use outside React components
+export const apiService = apiClientFactory.getClient(() => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('financeAppToken');
+  }
+  return null;
+});
+
 // API Provider component
 export const ApiProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<ApiState>({
@@ -32,115 +186,28 @@ export const ApiProvider = ({ children }: { children: ReactNode }) => {
   });
   
   const auth = useAuth();
-
-  // Helper method to build request options with authentication
-  const buildRequestOptions = (method: string, data?: any): RequestInit => {
-    const options: RequestInit = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    // Add authentication header if we have a token
-    if (auth.token) {
-      options.headers = {
-        ...options.headers,
-        'Authorization': `Bearer ${auth.token}`,
-      };
-    }
-
-    // Add body for methods that support it
-    if (data && ['POST', 'PUT', 'PATCH'].includes(method)) {
-      options.body = JSON.stringify(data);
-    }
-
-    return options;
-  };
-
-  // Common fetch handler with error handling
-  const fetchHandler = async <T,>(url: string, options: RequestInit): Promise<T> => {
-    // Add loading state
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
-    try {
-      // Ensure we're using the full URL
-      const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-      
-      // Make the request
-      const response = await fetch(fullUrl, options);
-      
-      // Handle non-200 responses
-      if (!response.ok) {
-        // Handle 401 Unauthorized
-        if (response.status === 401) {
-          // Clear auth state
-          auth.logout();
-          throw new Error('Your session has expired. Please log in again.');
-        }
-        
-        // Try to parse error message from the response
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Request failed with status ${response.status}`);
-      }
-      
-      // Parse the JSON response
-      const data = await response.json();
-      
-      // Return successful response
-      return data as T;
-    } catch (error) {
-      // Store the error in state
-      setState(prev => ({ ...prev, error: error as Error }));
-      
-      // Re-throw for handling in components
-      throw error;
-    } finally {
-      // Clear loading state
-      setState(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  // HTTP method implementations
-  const get = <T,>(url: string, params?: Record<string, any>): Promise<T> => {
-    // Build query string from params
-    const queryString = params 
-      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
-      : '';
-    
-    return fetchHandler<T>(`${url}${queryString}`, buildRequestOptions('GET'));
-  };
-
-  const post = <T,>(url: string, data?: any): Promise<T> => {
-    return fetchHandler<T>(url, buildRequestOptions('POST', data));
-  };
-
-  const put = <T,>(url: string, data: any): Promise<T> => {
-    return fetchHandler<T>(url, buildRequestOptions('PUT', data));
-  };
-
-  const patch = <T,>(url: string, data: any): Promise<T> => {
-    return fetchHandler<T>(url, buildRequestOptions('PATCH', data));
-  };
-
-  const delete_ = <T,>(url: string): Promise<T> => {
-    return fetchHandler<T>(url, buildRequestOptions('DELETE'));
-  };
-
+  
+  // Get the API client using the auth token
+  const apiClientRef = useRef<ApiClient | null>(null);
+  
+  // Initialize the API client on first render
+  useEffect(() => {
+    apiClientRef.current = apiClientFactory.getClient(() => auth.token);
+  }, [auth.token]);
+  
   // Utility methods
   const clearError = () => {
     setState(prev => ({ ...prev, error: null }));
   };
 
+  // If the API client isn't initialized yet, use a placeholder
+  const apiClient = apiClientRef.current || apiService;
+
   // Build context value
   const value: ApiContextType = {
+    ...apiClient,
     isLoading: state.isLoading,
     error: state.error,
-    get,
-    post,
-    put,
-    patch,
-    delete: delete_,
     clearError,
   };
 
@@ -156,190 +223,4 @@ export const useApi = () => {
   }
   
   return context;
-};
-
-// Create a standalone apiService for use outside React components
-export const apiService = {
-  get: async <T,>(url: string, params?: Record<string, any>): Promise<T> => {
-    // Build query string from params
-    const queryString = params 
-      ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
-      : '';
-    
-    // Ensure we're using the full URL
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-    
-    // Get token from localStorage (if available)
-    let token = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('financeAppToken');
-    }
-    
-    // Prepare headers
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Make the request
-    const response = await fetch(`${fullUrl}${queryString}`, {
-      method: 'GET',
-      headers,
-    });
-    
-    // Handle non-200 responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
-    }
-    
-    // Parse the JSON response
-    return await response.json() as T;
-  },
-  
-  post: async <T,>(url: string, data?: any): Promise<T> => {
-    // Ensure we're using the full URL
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-    
-    // Get token from localStorage (if available)
-    let token = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('financeAppToken');
-    }
-    
-    // Prepare headers
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Make the request
-    const response = await fetch(fullUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(data),
-    });
-    
-    // Handle non-200 responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
-    }
-    
-    // Parse the JSON response
-    return await response.json() as T;
-  },
-  
-  put: async <T,>(url: string, data: any): Promise<T> => {
-    // Ensure we're using the full URL
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-    
-    // Get token from localStorage (if available)
-    let token = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('financeAppToken');
-    }
-    
-    // Prepare headers
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Make the request
-    const response = await fetch(fullUrl, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(data),
-    });
-    
-    // Handle non-200 responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
-    }
-    
-    // Parse the JSON response
-    return await response.json() as T;
-  },
-  
-  patch: async <T,>(url: string, data: any): Promise<T> => {
-    // Ensure we're using the full URL
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-    
-    // Get token from localStorage (if available)
-    let token = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('financeAppToken');
-    }
-    
-    // Prepare headers
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Make the request
-    const response = await fetch(fullUrl, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify(data),
-    });
-    
-    // Handle non-200 responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
-    }
-    
-    // Parse the JSON response
-    return await response.json() as T;
-  },
-  
-  delete: async <T,>(url: string): Promise<T> => {
-    // Ensure we're using the full URL
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-    
-    // Get token from localStorage (if available)
-    let token = null;
-    if (typeof window !== 'undefined') {
-      token = localStorage.getItem('financeAppToken');
-    }
-    
-    // Prepare headers
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    // Make the request
-    const response = await fetch(fullUrl, {
-      method: 'DELETE',
-      headers,
-    });
-    
-    // Handle non-200 responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
-    }
-    
-    // Parse the JSON response
-    return await response.json() as T;
-  },
 }; 

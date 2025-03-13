@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { TransactionTable } from '@/components/reconciliation/TransactionTable';
 import { ReconciliationSummary } from '@/components/reconciliation/ReconciliationSummary';
-import { reconciliationApi } from '@/lib/api';
+import { useApi } from '@/lib/contexts/ApiContext';
 import { ReconciliationStatement, Transaction, ReconciliationSummary as ReconciliationSummaryType } from '@/lib/types';
 
 interface PageProps {
@@ -56,6 +56,8 @@ export default function StatementDetailPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('transactions');
   
+  const api = useApi();
+  
   // Calculate summary data based on the current state
   const calculateSummary = (): ReconciliationSummaryType => {
     if (!statement) {
@@ -86,14 +88,14 @@ export default function StatementDetailPage({ params }: PageProps) {
     setError(null);
     
     try {
-      const data = await reconciliationApi.getStatement(id);
-      setStatement(data);
+      const response = await api.get(`/api/reconciliation/statements/${id}`);
+      setStatement(response.data);
       
       // In a real app, we would also fetch system transactions for matching
       // For demo purposes, we'll just use the same transactions as mock system transactions
-      if (data && data.transactions) {
+      if (response.data && response.data.transactions) {
         // Create a copy with modified IDs to simulate system transactions
-        const mockSystemTransactions = data.transactions.map(t => ({
+        const mockSystemTransactions = response.data.transactions.map(t => ({
           ...t,
           id: `sys-${t.id}`,
           reconciled: false // Reset reconciled status for demo
@@ -119,9 +121,9 @@ export default function StatementDetailPage({ params }: PageProps) {
     
     try {
       // Make API call to match transactions
-      await reconciliationApi.matchTransactions({
-        statementId: id,
-        matches: [{ statementTransactionId, systemTransactionId }]
+      await api.post(`/api/reconciliation/statements/${id}/match`, {
+        statementTransactionId,
+        systemTransactionId
       });
       
       // Update local state to reflect the match
@@ -151,9 +153,8 @@ export default function StatementDetailPage({ params }: PageProps) {
     
     try {
       // Make API call to unmatch a transaction
-      await reconciliationApi.matchTransactions({
-        statementId: id,
-        unmatch: [statementTransactionId]
+      await api.post(`/api/reconciliation/statements/${id}/unmatch`, {
+        statementTransactionId
       });
       
       // Update local state to reflect the unmatch
@@ -184,8 +185,7 @@ export default function StatementDetailPage({ params }: PageProps) {
     
     try {
       // Make API call to complete the reconciliation process
-      await reconciliationApi.completeReconciliation(id, {
-        statementId: id,
+      await api.post(`/api/reconciliation/statements/${id}/complete`, {
         notes: 'Reconciliation completed successfully'
       });
       

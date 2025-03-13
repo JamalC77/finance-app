@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { reconciliationApi } from '@/lib/api';
+import { useApi } from '@/lib/contexts/ApiContext';
 
 interface StatementUploaderProps {
   accounts: { id: string; name: string }[];
@@ -13,6 +13,7 @@ interface StatementUploaderProps {
 }
 
 export function StatementUploader({ accounts, onSuccess }: StatementUploaderProps) {
+  const api = useApi();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -70,14 +71,14 @@ export function StatementUploader({ accounts, onSuccess }: StatementUploaderProp
         
         try {
           // Use the reconciliation API to import the statement
-          const response = await reconciliationApi.importStatement({
-            accountId: selectedAccount,
-            fileContent,
-            fileName: selectedFile.name
+          const response = await api.post('/api/reconciliation/statements/import', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
           });
           
           setUploadSuccess(true);
-          onSuccess(response);
+          onSuccess(response.data);
         } catch (err) {
           console.error('Upload error:', err);
           setError(err instanceof Error ? err.message : 'Failed to upload statement file');

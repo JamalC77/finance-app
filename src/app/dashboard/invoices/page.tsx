@@ -74,8 +74,8 @@ const getStatusColor = (status: string) => {
 export default function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [invoiceData, setInvoiceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [invoiceData, setInvoiceData] = useState<any[]>([]);
   
   useEffect(() => {
     fetchInvoices();
@@ -91,7 +91,7 @@ export default function InvoicesPage() {
       }
       
       const data = await getInvoices(filters);
-      setInvoiceData(data);
+      setInvoiceData(data || []);
     } catch (error) {
       console.error('Error fetching invoices:', error);
       toast({
@@ -99,13 +99,14 @@ export default function InvoicesPage() {
         description: 'Failed to load invoices',
         variant: 'destructive'
       });
+      setInvoiceData([]);
     } finally {
       setLoading(false);
     }
   };
   
   // Filter invoices based on search query
-  const filteredInvoices = invoiceData.filter(invoice => {
+  const filteredInvoices = invoiceData?.filter(invoice => {
     // Filter by search query
     const matchesSearch = 
       invoice.number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -113,7 +114,7 @@ export default function InvoicesPage() {
       invoice.id?.toLowerCase().includes(searchQuery.toLowerCase());
     
     return matchesSearch;
-  });
+  }) || [];
   
   // Get total stats
   const totalAmount = filteredInvoices.reduce((sum, invoice) => sum + invoice.total, 0);

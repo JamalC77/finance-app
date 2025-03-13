@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useApi } from '@/lib/api/ApiContext';
+import { useApi } from '@/lib/contexts/ApiContext';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -104,7 +104,7 @@ function CheckoutForm({ clientSecret, invoiceId, onPaymentSuccess, isExpedited }
 export default function InvoiceCheckoutPage() {
   const params = useParams();
   const router = useRouter();
-  const { api } = useApi();
+  const api = useApi();
   const { toast } = useToast();
   const [invoice, setInvoice] = useState<any>(null);
   const [paymentIntent, setPaymentIntent] = useState<any>(null);
