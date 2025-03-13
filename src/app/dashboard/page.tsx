@@ -22,6 +22,7 @@ import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, Tooltip, XAxis,
 import { useApi } from '@/lib/contexts/ApiContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import { quickbooksApi } from '@/lib/services/apiService';
 
 // Types for our data
 type Transaction = {
@@ -130,7 +131,8 @@ export default function DashboardPage() {
     recentActivity: [] as RecentActivity[],
     cashFlow: [] as CashFlowItem[],
     topCustomers: [] as CustomerItem[],
-    topExpenseCategories: [] as CategoryItem[]
+    topExpenseCategories: [] as CategoryItem[],
+    source: 'standard' as 'standard' | 'quickbooks'
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -151,6 +153,60 @@ export default function DashboardPage() {
       setIsLoading(true);
       console.log('Starting to load dashboard data...');
       
+      // First check if we have a QuickBooks connection and try to get data from there
+      try {
+        console.log('🔍 [DASHBOARD] Checking QuickBooks connection...');
+        // Get the auth token
+        const token = auth.token;
+        console.log('🔑 [DASHBOARD] Using auth token for QuickBooks API calls');
+        
+        const connectionResponse = await quickbooksApi.getConnectionStatus(token);
+        console.log('📡 [DASHBOARD] QuickBooks connection response:', connectionResponse);
+        
+        if (connectionResponse.data?.connected) {
+          console.log('✅ [DASHBOARD] QuickBooks is connected, fetching dashboard data from QuickBooks...');
+          
+          try {
+            console.log('🔄 [DASHBOARD] Calling QuickBooks dashboard endpoint...');
+            const qbDashboardResponse = await quickbooksApi.getDashboardData(token);
+            console.log('📊 [DASHBOARD] QuickBooks dashboard response:', qbDashboardResponse);
+            
+            if (qbDashboardResponse.success && qbDashboardResponse.data) {
+              console.log('🎉 [DASHBOARD] Successfully loaded dashboard data from QuickBooks');
+              
+              // Process dates in recent activity (they come as strings from API)
+              const processedData = {
+                ...qbDashboardResponse.data,
+                recentActivity: qbDashboardResponse.data.recentActivity.map(item => ({
+                  ...item,
+                  date: new Date(item.date)
+                })),
+                source: 'quickbooks' // Ensure source is set to quickbooks
+              };
+              
+              console.log('🧩 [DASHBOARD] Processed QuickBooks data:', processedData);
+              
+              setDashboardData(processedData);
+              setIsLoading(false);
+              return; // Exit early as we got data from QuickBooks
+            } else {
+              console.warn('⚠️ [DASHBOARD] QuickBooks dashboard request success but no data returned:', qbDashboardResponse);
+            }
+          } catch (qbError) {
+            console.error('❌ [DASHBOARD] Error fetching data from QuickBooks:', qbError);
+            console.log('↩️ [DASHBOARD] Falling back to standard API data...');
+            // Continue with regular data loading below
+          }
+        } else {
+          console.log('📵 [DASHBOARD] No active QuickBooks connection, using standard API data');
+        }
+      } catch (connectionError) {
+        console.error('❌ [DASHBOARD] Error checking QuickBooks connection:', connectionError);
+        console.log('↩️ [DASHBOARD] Falling back to standard API data...');
+        // Continue with regular data loading below
+      }
+      
+      // Regular data loading logic (existing code)
       // Get current date and calculate date range
       const now = new Date();
       const currentMonth = now.getMonth();
@@ -288,6 +344,12 @@ export default function DashboardPage() {
       const prevExpensesTotal = prevExpenses
         .filter(expense => expense.status === 'paid')
         .reduce((sum, expense) => sum + expense.amount, 0);
+      
+      // Calculate profit/loss (current cash flow)
+      const currentCashFlow = currentIncome - currentExpensesTotal;
+      
+      // Calculate previous month's profit/loss
+      const prevCashFlow = prevIncome - prevExpensesTotal;
         
       // Cash balance (sum of all transactions)
       const cashBalance = currentTransactions.reduce((sum, transaction) => {
@@ -307,11 +369,9 @@ export default function DashboardPage() {
       
       const incomeChangePercentage = calculatePercentageChange(currentIncome, prevIncome);
       const expensesChangePercentage = calculatePercentageChange(currentExpensesTotal, prevExpensesTotal);
-      const cashChangePercentage = calculatePercentageChange(cashBalance, prevCashBalance);
-      const profitLossChangePercentage = calculatePercentageChange(
-        currentIncome - currentExpensesTotal,
-        prevIncome - prevExpensesTotal
-      );
+      // Cash change percentage should reflect the change in monthly cash flow, not total balance
+      const cashChangePercentage = calculatePercentageChange(currentCashFlow, prevCashFlow);
+      const profitLossChangePercentage = calculatePercentageChange(currentCashFlow, prevCashFlow);
       
       // Generate recent activity from transactions, invoices, and expenses
       const recentActivity = [
@@ -514,13 +574,14 @@ export default function DashboardPage() {
           changePercentage: expensesChangePercentage
         },
         profitLoss: {
-          mtd: currentIncome - currentExpensesTotal,
+          mtd: currentCashFlow,
           changePercentage: profitLossChangePercentage
         },
         recentActivity,
         cashFlow: cashFlowData,
         topCustomers,
-        topExpenseCategories
+        topExpenseCategories,
+        source: 'standard'
       });
     } catch (err) {
       setError(err as Error);
@@ -579,7 +640,8 @@ export default function DashboardPage() {
     recentActivity, 
     cashFlow,
     topCustomers,
-    topExpenseCategories
+    topExpenseCategories,
+    source
   } = dashboardData;
 
   // If auth is still loading, show a loading state
@@ -640,7 +702,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <div className="flex items-center space-x-2">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          {source === 'quickbooks' && (
+            <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+              QuickBooks Data
+            </Badge>
+          )}
+        </div>
         <div className="flex items-center space-x-2">
           {apiStatus === 'error' && (
             <Badge variant="destructive" className="mr-2">
