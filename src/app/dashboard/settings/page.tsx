@@ -254,36 +254,6 @@ export default function SettingsPage() {
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Billing</span>
                 </a>
-                <a 
-                  href="#team" 
-                  onClick={() => handleSectionClick("team")}
-                  className={`flex items-center px-4 py-3 border-l-2 ${
-                    activeSection === "team" ? "border-primary bg-muted/50" : "border-transparent hover:bg-muted/50"
-                  }`}
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Team</span>
-                </a>
-                <a 
-                  href="#invoices" 
-                  onClick={() => handleSectionClick("invoices")}
-                  className={`flex items-center px-4 py-3 border-l-2 ${
-                    activeSection === "invoices" ? "border-primary bg-muted/50" : "border-transparent hover:bg-muted/50"
-                  }`}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Invoice Settings</span>
-                </a>
-                <a 
-                  href="#taxes" 
-                  onClick={() => handleSectionClick("taxes")}
-                  className={`flex items-center px-4 py-3 border-l-2 ${
-                    activeSection === "taxes" ? "border-primary bg-muted/50" : "border-transparent hover:bg-muted/50"
-                  }`}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  <span>Tax Settings</span>
-                </a>
                 <Link 
                   href="/settings/integrations" 
                   className="flex items-center px-4 py-3 border-l-2 border-transparent hover:bg-muted/50"
@@ -291,14 +261,6 @@ export default function SettingsPage() {
                   <Link2 className="mr-2 h-4 w-4" />
                   <span>Integrations</span>
                 </Link>
-                <a href="#preferences" className="flex items-center px-4 py-3 border-l-2 border-transparent hover:bg-muted/50">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Preferences</span>
-                </a>
-                <a href="#notifications" className="flex items-center px-4 py-3 border-l-2 border-transparent hover:bg-muted/50">
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notifications</span>
-                </a>
                 <a href="#security" className="flex items-center px-4 py-3 border-l-2 border-transparent hover:bg-muted/50">
                   <Lock className="mr-2 h-4 w-4" />
                   <span>Security</span>

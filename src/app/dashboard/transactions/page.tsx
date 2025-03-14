@@ -25,7 +25,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useApi } from '@/lib/contexts/ApiContext';
-import { transactions as mockTransactions } from '@/lib/mock-data';
 
 // Define transaction type that works with both mock data and API data
 interface Transaction {
@@ -68,7 +67,7 @@ const formatDate = (dateString: string) => {
 
 export default function TransactionsPage() {
   // State for transactions data
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,8 +93,6 @@ export default function TransactionsPage() {
       } catch (err) {
         console.error('Error fetching transactions:', err);
         setError(err as Error);
-        // Fallback to mock data if API fails
-        setTransactions(mockTransactions);
       } finally {
         setIsLoading(false);
       }

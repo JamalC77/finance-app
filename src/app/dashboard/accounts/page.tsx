@@ -26,7 +26,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useApi } from '@/lib/contexts/ApiContext';
-import { accounts as mockAccounts } from '@/lib/mock-data';
 
 // Define account type that works with both mock data and API data
 interface Account {
@@ -81,7 +80,7 @@ const getAccountTypeName = (type: string) => {
 
 export default function AccountsPage() {
   // State for accounts data
-  const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   
@@ -108,8 +107,8 @@ export default function AccountsPage() {
       } catch (err) {
         console.error('Error fetching accounts:', err);
         setError(err as Error);
-        // Fallback to mock data if API fails
-        setAccounts(mockAccounts);
+        // No longer falling back to mock data
+        setAccounts([]);
       } finally {
         setIsLoading(false);
       }

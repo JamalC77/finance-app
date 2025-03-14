@@ -19,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExportButton from '@/components/ExportButton';
 import { getProfitLossReport, getCashFlowReport } from '@/api/services/reportService';
 import { format, subMonths, subWeeks, subYears, startOfMonth, startOfWeek, startOfYear, endOfMonth, isSameDay, addMonths } from 'date-fns';
-import { dashboardSummary } from '@/lib/mock-data';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -108,73 +107,6 @@ const getDateRangeFromPeriod = (period: string): { startDate: Date, endDate: Dat
 // Helper function for last day of year
 const endOfYear = (date: Date): Date => {
   return new Date(date.getFullYear(), 11, 31);
-};
-
-// Mock data formatter to match API response structure
-const formatMockProfitLossData = () => {
-  const { income, expenses, profitLoss } = dashboardSummary;
-  
-  return {
-    startDate: format(subMonths(new Date(), 1), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd'),
-    income: {
-      total: income.ytd,
-      changePercentage: income.changePercentage,
-      categories: [
-        { name: 'Service Revenue', amount: income.ytd * 0.7 },
-        { name: 'Product Sales', amount: income.ytd * 0.3 }
-      ]
-    },
-    expenses: {
-      total: expenses.ytd,
-      changePercentage: expenses.changePercentage,
-      categories: [
-        { name: 'Office Supplies', amount: expenses.ytd * 0.25 },
-        { name: 'Software & Services', amount: expenses.ytd * 0.15 },
-        { name: 'Utilities', amount: expenses.ytd * 0.20 },
-        { name: 'Travel & Entertainment', amount: expenses.ytd * 0.10 },
-        { name: 'Other Expenses', amount: expenses.ytd * 0.30 }
-      ]
-    },
-    netIncome: profitLoss.ytd,
-    profitMarginChange: profitLoss.changePercentage
-  };
-};
-
-// Mock data formatter for cash flow
-const formatMockCashFlowData = () => {
-  const { cashFlow } = dashboardSummary;
-  const totalIncome = cashFlow.reduce((sum, month) => sum + month.income, 0);
-  const totalExpenses = cashFlow.reduce((sum, month) => sum + month.expenses, 0);
-  
-  return {
-    startDate: format(subMonths(new Date(), 6), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd'),
-    operatingActivities: {
-      items: [
-        { name: 'Sales Revenue', amount: totalIncome * 0.95 },
-        { name: 'Interest Income', amount: totalIncome * 0.05 },
-        { name: 'Payments to Suppliers', amount: -totalExpenses * 0.6 },
-        { name: 'Payments to Employees', amount: -totalExpenses * 0.4 }
-      ]
-    },
-    investingActivities: {
-      items: [
-        { name: 'Purchase of Equipment', amount: -1200 },
-        { name: 'Sale of Assets', amount: 500 }
-      ]
-    },
-    financingActivities: {
-      items: [
-        { name: 'Loan Repayment', amount: -800 },
-        { name: 'Owner Investment', amount: 5000 }
-      ]
-    },
-    operatingCashFlow: totalIncome - totalExpenses,
-    investingCashFlow: -700,
-    financingCashFlow: 4200,
-    netCashFlow: (totalIncome - totalExpenses) + (-700) + 4200
-  };
 };
 
 export default function ReportsPage() {
@@ -286,11 +218,6 @@ export default function ReportsPage() {
         setUsingMockData(false);
       } catch (err: any) {
         console.error('Error fetching report data:', err);
-        
-        // Fallback to mock data
-        setProfitLossData(formatMockProfitLossData());
-        setCashFlowData(formatMockCashFlowData());
-        setUsingMockData(true);
         
         // Only show an error message if it's likely a server issue, not just missing data
         if (err.message && err.message.includes('NetworkError') || 

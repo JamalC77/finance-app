@@ -22,7 +22,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { useApi } from '@/lib/contexts/ApiContext';
-import { categories as mockCategories } from '@/lib/mock-data';
 
 // Define category type that works with both mock data and API data
 interface Category {
@@ -38,7 +37,7 @@ interface Category {
 
 export default function CategoriesPage() {
   // State for categories data
-  const [categories, setCategories] = useState<Category[]>(mockCategories);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,8 +60,8 @@ export default function CategoriesPage() {
       } catch (err) {
         console.error('Error fetching categories:', err);
         setError(err as Error);
-        // Fallback to mock data if API fails
-        setCategories(mockCategories);
+        // No longer falling back to mock data
+        setCategories([]);
       } finally {
         setIsLoading(false);
       }

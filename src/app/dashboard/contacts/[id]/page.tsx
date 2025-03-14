@@ -18,8 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getContact } from '@/api/services/contactService';
 import { Skeleton } from '@/components/ui/skeleton';
-// Import mock data for fallback
-import { contacts as mockContacts } from '@/lib/mock-data';
 
 // Helper function to get the appropriate icon for contact type
 const getContactTypeIcon = (type: string) => {
@@ -50,16 +48,8 @@ export default function ContactDetailsPage({ params }: { params: { id: string } 
         setUsingMockData(false);
       } catch (err) {
         console.error('Error fetching contact details:', err);
-        
-        // Use mock data as fallback
-        const mockContact = mockContacts.find(c => c.id === params.id);
-        if (mockContact) {
-          setContact(mockContact);
-          setUsingMockData(true);
-          setError('Using mock data. API connection unavailable.');
-        } else {
-          setError('Contact not found. Please try again later.');
-        }
+        setContact(null);
+        setError('Contact not found or API unavailable. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -128,21 +118,6 @@ export default function ContactDetailsPage({ params }: { params: { id: string } 
           </Button>
         </div>
       </div>
-
-      {usingMockData && (
-        <div className="flex items-center gap-2 p-4 bg-amber-50 text-amber-700 rounded-md">
-          <AlertCircle className="h-5 w-5" />
-          <p>{error || 'Using mock data. API connection unavailable.'}</p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="ml-auto" 
-            onClick={() => window.location.reload()}
-          >
-            Retry Connection
-          </Button>
-        </div>
-      )}
 
       {/* Contact Header */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6">

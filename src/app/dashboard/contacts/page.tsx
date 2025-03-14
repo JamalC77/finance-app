@@ -27,8 +27,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getContacts } from '@/api/services/contactService';
 import { Skeleton } from '@/components/ui/skeleton';
-// Import mock data as fallback
-import { contacts as mockContacts } from '@/lib/mock-data';
 
 const getContactTypeIcon = (type: string) => {
   switch (type) {
@@ -66,14 +64,10 @@ export default function ContactsPage() {
         setUsingMockData(false);
       } catch (err) {
         console.error('Error fetching contacts:', err);
-        // Fall back to mock data
-        let filtered = [...mockContacts];
-        if (typeFilter) {
-          filtered = mockContacts.filter(c => c.type === typeFilter);
-        }
-        setContacts(filtered || []);
-        setUsingMockData(true);
-        setError('Unable to connect to API. Using mock data temporarily.');
+        // No longer falling back to mock data
+        setContacts([]);
+        setUsingMockData(false);
+        setError('Unable to connect to API. Please try again later.');
       } finally {
         setLoading(false);
       }
