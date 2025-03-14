@@ -709,6 +709,18 @@ export default function DashboardPage() {
               QuickBooks Data
             </Badge>
           )}
+          {source === 'standard' && !recentActivity.length && (
+            <div className="flex items-center ml-2">
+              <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                No data available
+              </Badge>
+              <Button variant="link" size="sm" asChild className="text-blue-600 hover:text-blue-800">
+                <Link href="/settings/integrations">
+                  Connect an integration
+                </Link>
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           {apiStatus === 'error' && (
@@ -730,14 +742,14 @@ export default function DashboardPage() {
             <ArrowUpRight className="mr-2 h-4 w-4" />
             Refresh Data
           </Button>
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <CalendarDays className="mr-2 h-4 w-4" />
             Last 30 Days
           </Button>
           <Button variant="outline" size="sm">
             <FileText className="mr-2 h-4 w-4" />
             Export
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -985,42 +997,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <Link href="/dashboard/invoices/new" passHref className="block">
-          <Button variant="outline" className="h-20 justify-start px-4 w-full">
-            <FileText className="mr-3 h-5 w-5 text-primary" />
-            <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-medium">New Invoice</span>
-              <span className="text-xs text-muted-foreground">Create a new invoice</span>
-            </div>
-          </Button>
-        </Link>
-        <Link href="/dashboard/expenses/new" passHref className="block">
-          <Button variant="outline" className="h-20 justify-start px-4 w-full">
-            <Receipt className="mr-3 h-5 w-5 text-primary" />
-            <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-medium">Add Expense</span>
-              <span className="text-xs text-muted-foreground">Record a new expense</span>
-            </div>
-          </Button>
-        </Link>
-        <Link href="/dashboard/reports" passHref className="block">
-          <Button variant="outline" className="h-20 justify-start px-4 w-full">
-            <BarChart className="mr-3 h-5 w-5 text-primary" />
-            <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-medium">View Reports</span>
-              <span className="text-xs text-muted-foreground">Financial insights</span>
-            </div>
-          </Button>
-        </Link>
-        <Link href="/dashboard/contacts/new" passHref className="block">
-          <Button variant="outline" className="h-20 justify-start px-4 w-full">
-            <DollarSign className="mr-3 h-5 w-5 text-primary" />
-            <div className="flex flex-col items-start text-left">
-              <span className="text-sm font-medium">Add Contact</span>
-              <span className="text-xs text-muted-foreground">Create a new contact</span>
-            </div>
-          </Button>
-        </Link>
       </div>
     </div>
   );

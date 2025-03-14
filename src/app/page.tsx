@@ -62,10 +62,10 @@ export default function Home() {
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-6xl text-center">
             <h1 className="text-5xl font-bold leading-tight mb-6">
-              Transform QuickBooks Data Into Powerful Insights
+              Transform Your Financial Data Into Powerful Business Insights
             </h1>
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              CFO Line connects seamlessly with QuickBooks to process your financial data and build sophisticated data models that help you deliver better insights to your clients.
+              CFO Line connects seamlessly with QuickBooks to process your financial data and deliver deep business analytics that help you make smarter decisions and drive growth.
             </p>
             <div className="flex justify-center space-x-4">
               <Link href="/auth/register">
@@ -98,33 +98,33 @@ export default function Home() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Automatically sync your financial data from QuickBooks and keep everything up-to-date in real-time.</p>
+                  <p>Automatically sync your financial data from QuickBooks and keep everything up-to-date in real-time for accurate business intelligence.</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
                   <CreditCard className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Advanced Data Modeling</CardTitle>
+                  <CardTitle>Advanced Data Analytics</CardTitle>
                   <CardDescription>
-                    Transform raw financial data into meaningful insights.
+                    Transform raw financial data into actionable business insights.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Our sophisticated algorithms analyze your QuickBooks data to create custom financial models tailored to your clients&apos; needs.</p>
+                  <p>Our sophisticated algorithms analyze your QuickBooks data to uncover trends, opportunities, and potential issues before they impact your business.</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
                   <BarChart className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle>Client-Ready Reports</CardTitle>
+                  <CardTitle>Strategic Reporting</CardTitle>
                   <CardDescription>
-                    Present professional insights to your clients.
+                    Make data-driven decisions with confidence.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Generate beautiful, customizable reports that help your clients understand their financial position and make better decisions.</p>
+                  <p>Generate simple, easy-to-digest reports that help you understand your financial position and make strategic decisions to grow your business.</p>
                 </CardContent>
               </Card>
             </div>
@@ -134,9 +134,9 @@ export default function Home() {
         {/* CTA Section */}
         <section className="py-20 px-4 text-center">
           <div className="container mx-auto max-w-3xl">
-            <h2 className="text-3xl font-bold mb-6">Ready to Elevate Your Financial Services?</h2>
+            <h2 className="text-3xl font-bold mb-6">Ready to Unlock the Full Potential of Your Financial Data?</h2>
             <p className="text-xl text-muted-foreground mb-10">
-              Join accounting professionals who use CFO Line to deliver deeper insights and more value to their clients.
+              Join businesses that use CFO Line to gain deeper insights, identify growth opportunities, and make smarter financial decisions.
             </p>
             <Link href="/auth/register">
               <Button size="lg" className="text-lg px-8">
@@ -158,6 +158,9 @@ export default function Home() {
             <div className="flex space-x-6 mb-6 md:mb-0">
               <Link href="/privacy-policy" className="text-sm hover:underline">
                 Privacy Policy
+              </Link>
+              <Link href="/terms" className="text-sm hover:underline">
+                Terms of Service
               </Link>
               <Link href="/eula" className="text-sm hover:underline">
                 EULA

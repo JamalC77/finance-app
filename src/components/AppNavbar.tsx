@@ -13,10 +13,12 @@ import {
   FileText,
   BarChart,
   Home,
-  DollarSign
+  DollarSign,
+  Database
 } from 'lucide-react';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +86,13 @@ export function AppNavbar() {
                   Dashboard
                 </Link>
                 <Link 
+                  href="/settings/integrations" 
+                  className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors"
+                >
+                  <Database className="h-4 w-4" />
+                  Integrations
+                </Link>
+                <Link 
                   href="/dashboard/invoices" 
                   className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors"
                 >
@@ -130,34 +139,17 @@ export function AppNavbar() {
               Dashboard
             </Link>
             <Link 
-              href="/dashboard/invoices" 
+              href="/settings/integrations" 
               className="text-sm font-medium transition-colors hover:text-primary"
             >
-              Invoices
-            </Link>
-            <Link 
-              href="/dashboard/expenses" 
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Expenses
-            </Link>
-            <Link 
-              href="/dashboard/contacts" 
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Contacts
-            </Link>
-            <Link 
-              href="/dashboard/reports" 
-              className="text-sm font-medium transition-colors hover:text-primary"
-            >
-              Reports
+              Integrations
             </Link>
           </nav>
         </div>
 
         {/* User menu */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-full">

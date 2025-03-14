@@ -11,31 +11,15 @@ const integrations = [
     id: 'quickbooks',
     name: 'QuickBooks',
     description: 'Connect your QuickBooks account to sync your accounting data',
-    icon: '/icons/quickbooks.svg',
+    icon: 'https://cdn.cdnlogo.com/logos/q/54/quickbooks.svg',
     status: 'available',
     href: '/settings/integrations/quickbooks',
   },
   {
-    id: 'stripe',
-    name: 'Stripe',
-    description: 'Process payments and manage subscriptions',
-    icon: '/icons/stripe.svg',
-    status: 'coming-soon',
-    href: '#',
-  },
-  {
-    id: 'google-analytics',
-    name: 'Google Analytics',
-    description: 'Track website traffic and user behavior',
-    icon: '/icons/google-analytics.svg',
-    status: 'coming-soon',
-    href: '#',
-  },
-  {
-    id: 'zapier',
-    name: 'Zapier',
-    description: 'Connect with thousands of other apps',
-    icon: '/icons/zapier.svg',
+    id: 'xero',
+    name: 'Xero',
+    description: 'Sync with Xero to manage invoices, bills, and financial reporting',
+    icon: 'https://cdn.cdnlogo.com/logos/x/82/xero.svg',
     status: 'coming-soon',
     href: '#',
   },
@@ -51,23 +35,7 @@ export default function IntegrationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {integrations.map((integration) => (
           <Card key={integration.id} className="overflow-hidden">
-            <CardHeader className="flex flex-row items-center gap-4 pb-2">
-              <div className="w-10 h-10 flex items-center justify-center rounded-md bg-muted">
-                {integration.icon ? (
-                  <img 
-                    src={integration.icon} 
-                    alt={integration.name} 
-                    className="w-6 h-6"
-                    onError={(e) => {
-                      e.currentTarget.src = '';
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.parentElement!.innerHTML = `<Link2 className="h-6 w-6 text-muted-foreground" />`;
-                    }}
-                  />
-                ) : (
-                  <Link2 className="h-6 w-6 text-muted-foreground" />
-                )}
-              </div>
+            <CardHeader className="pb-2">
               <div>
                 <CardTitle>{integration.name}</CardTitle>
                 <CardDescription>{integration.description}</CardDescription>

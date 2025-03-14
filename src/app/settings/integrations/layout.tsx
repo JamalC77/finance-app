@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, Settings } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { AppNavbar } from '@/components/AppNavbar';
 
 export default function IntegrationsLayout({
   children,
@@ -23,61 +24,64 @@ export default function IntegrationsLayout({
     : null;
   
   return (
-    <div className="container py-4">
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard/settings">
-                <Settings className="h-4 w-4 mr-1" />
-                Settings
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator>
-            <ChevronRight className="h-4 w-4" />
-          </BreadcrumbSeparator>
-          <BreadcrumbItem>
-            {pathname === '/settings/integrations' ? (
-              <span>Integrations</span>
-            ) : (
+    <div className="flex min-h-screen flex-col">
+      <AppNavbar />
+      <div className="container py-4">
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/settings/integrations">Integrations</Link>
+                <Link href="/dashboard/settings">
+                  <Settings className="h-4 w-4 mr-1" />
+                  Settings
+                </Link>
               </BreadcrumbLink>
-            )}
-          </BreadcrumbItem>
-          
-          {formattedIntegration && (
-            <>
-              <BreadcrumbSeparator>
-                <ChevronRight className="h-4 w-4" />
-              </BreadcrumbSeparator>
-              <BreadcrumbItem>
-                {pathParts.length > 4 ? (
-                  <BreadcrumbLink asChild>
-                    <Link href={`/settings/integrations/${currentIntegration}`}>{formattedIntegration}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <span>{formattedIntegration}</span>
-                )}
-              </BreadcrumbItem>
-              
-              {pathParts.length > 4 && (
-                <>
-                  <BreadcrumbSeparator>
-                    <ChevronRight className="h-4 w-4" />
-                  </BreadcrumbSeparator>
-                  <BreadcrumbItem>
-                    <span>{pathParts[4].charAt(0).toUpperCase() + pathParts[4].slice(1)}</span>
-                  </BreadcrumbItem>
-                </>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator>
+              <ChevronRight className="h-4 w-4" />
+            </BreadcrumbSeparator>
+            <BreadcrumbItem>
+              {pathname === '/settings/integrations' ? (
+                <span>Integrations</span>
+              ) : (
+                <BreadcrumbLink asChild>
+                  <Link href="/settings/integrations">Integrations</Link>
+                </BreadcrumbLink>
               )}
-            </>
-          )}
-        </BreadcrumbList>
-      </Breadcrumb>
-      
-      {children}
+            </BreadcrumbItem>
+            
+            {formattedIntegration && (
+              <>
+                <BreadcrumbSeparator>
+                  <ChevronRight className="h-4 w-4" />
+                </BreadcrumbSeparator>
+                <BreadcrumbItem>
+                  {pathParts.length > 4 ? (
+                    <BreadcrumbLink asChild>
+                      <Link href={`/settings/integrations/${currentIntegration}`}>{formattedIntegration}</Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <span>{formattedIntegration}</span>
+                  )}
+                </BreadcrumbItem>
+                
+                {pathParts.length > 4 && (
+                  <>
+                    <BreadcrumbSeparator>
+                      <ChevronRight className="h-4 w-4" />
+                    </BreadcrumbSeparator>
+                    <BreadcrumbItem>
+                      <span>{pathParts[4].charAt(0).toUpperCase() + pathParts[4].slice(1)}</span>
+                    </BreadcrumbItem>
+                  </>
+                )}
+              </>
+            )}
+          </BreadcrumbList>
+        </Breadcrumb>
+        
+        {children}
+      </div>
     </div>
   );
 } 

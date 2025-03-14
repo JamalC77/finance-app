@@ -50,7 +50,6 @@ export type AuthContextType = {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUserData: (data: User) => void;
-  bypassAuth: () => void;
 };
 
 // Create context with default values
@@ -63,7 +62,6 @@ const AuthContext = createContext<AuthContextType>({
   register: async () => {},
   logout: async () => {},
   setUserData: () => {},
-  bypassAuth: () => {},
 });
 
 // Custom hook to use the auth context
@@ -235,40 +233,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(data);
   };
 
-  // Debug bypass function to set a mock token and user
-  const bypassAuth = () => {
-    // Create a mock token that won't expire for 24 hours
-    // Note: sub claim is set to "user-1" to match our API implementation
-    const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEiLCJuYW1lIjoiRGVtbyBVc2VyIiwiZW1haWwiOiJkZW1vQGV4YW1wbGUuY29tIiwicm9sZSI6IkFETUlOIiwib3JnYW5pemF0aW9uSWQiOiJvcmctMSIsImlhdCI6MTYwOTQ1OTAwMCwiZXhwIjo5OTk5OTk5OTk5fQ.abcdefghijklmnopqrstuvwxyz1234567890';
-    
-    // Set mock user (matches our API implementation)
-    const mockUser = {
-      id: 'user-1',
-      name: 'Demo User',
-      email: 'demo@example.com',
-      organizationId: 'org-1',
-      organizationName: 'Demo Organization',
-      role: 'ADMIN'
-    };
-    
-    // Store token in localStorage
-    localStorage.setItem('financeAppToken', mockToken);
-    
-    // Update state
-    setToken(mockToken);
-    setUser(mockUser);
-    
-    // Show success message
-    toast({
-      title: 'Bypassed Authentication',
-      description: 'Using development user credentials',
-      duration: 3000
-    });
-    
-    // Redirect to dashboard
-    router.push('/dashboard');
-  };
-
   // Compute authentication status
   const isAuthenticated = !!user && !!token;
 
@@ -282,23 +246,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     register,
     logout,
     setUserData,
-    bypassAuth,
   };
 
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
-      {process.env.NODE_ENV !== 'production' && !isAuthenticated && !isLoading && (
-        <div className="fixed bottom-4 right-4 z-50 p-4 bg-black bg-opacity-70 rounded-lg">
-          <Button 
-            variant="destructive"
-            onClick={bypassAuth}
-            className="text-xs"
-          >
-            Bypass Auth (Dev Only)
-          </Button>
-        </div>
-      )}
     </AuthContext.Provider>
   );
 }; 

@@ -8,7 +8,9 @@ import {
   MapPin, 
   Briefcase, 
   Lock, 
-  Save
+  Save,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,14 +23,36 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { apiService } from "@/lib/contexts/ApiContext";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 // User type from AuthContext
 import { User } from "@/lib/contexts/AuthContext";
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const { user, isLoading, setUserData } = useAuth();
   const initialLoadDone = useRef(false);
+  
+  // Password change state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   console.log("ProfilePage - Auth User Data:", user);
   
@@ -247,6 +271,111 @@ export default function ProfilePage() {
     }
   };
 
+  // Password change handlers
+  const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user types
+    if (passwordError) {
+      setPasswordError("");
+    }
+  };
+
+  const togglePasswordVisibility = (field: 'currentPassword' | 'newPassword' | 'confirmPassword') => {
+    if (field === 'currentPassword') {
+      setShowCurrentPassword(!showCurrentPassword);
+    } else if (field === 'newPassword') {
+      setShowNewPassword(!showNewPassword);
+    } else {
+      setShowConfirmPassword(!showConfirmPassword);
+    }
+  };
+
+  const validatePasswordData = () => {
+    // Check if current password is provided
+    if (!passwordData.currentPassword) {
+      setPasswordError("Current password is required");
+      return false;
+    }
+    
+    // Check if new password is provided
+    if (!passwordData.newPassword) {
+      setPasswordError("New password is required");
+      return false;
+    }
+    
+    // Check if new password meets minimum requirements (e.g., 8 characters)
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long");
+      return false;
+    }
+    
+    // Check if passwords match
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleChangePassword = async () => {
+    // Validate password data
+    if (!validatePasswordData()) {
+      return;
+    }
+    
+    setPasswordLoading(true);
+    setPasswordError("");
+    
+    try {
+      // Call API to change password
+      const response = await apiService.post<{message: string}>('/api/users/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword,
+      });
+      
+      console.log("ProfilePage - Password change response:", response);
+      
+      // Show success message
+      toast({
+        title: "Password updated",
+        description: response?.message || "Your password has been updated successfully.",
+      });
+      
+      // Close dialog and reset form
+      setPasswordDialogOpen(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: unknown) {
+      console.error("Error changing password:", error);
+      
+      // Set error message
+      const errorObj = error as { 
+        response?: { data?: { message?: string } },
+        message?: string 
+      };
+      
+      setPasswordError(
+        errorObj?.response?.data?.message || 
+        errorObj?.message || 
+        "Failed to change password. Please try again."
+      );
+      
+      toast({
+        title: "Error",
+        description: "Failed to change password. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   // If auth is still loading, show a loading indicator
   if (isLoading) {
     return (
@@ -284,9 +413,6 @@ export default function ProfilePage() {
                 <p className="text-muted-foreground">{formData.jobTitle}</p>
                 <p className="text-sm text-muted-foreground">{formData.company}</p>
                 
-                <Button variant="outline" size="sm" className="mt-4">
-                  <Camera className="mr-2 h-4 w-4" /> Change Photo
-                </Button>
               </div>
               
               <Separator className="my-6" />
@@ -625,7 +751,7 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="mb-6">
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => setPasswordDialogOpen(true)}>
                       <Lock className="mr-2 h-4 w-4" /> Change Password
                     </Button>
                   </div>
@@ -645,27 +771,6 @@ export default function ProfilePage() {
                         onCheckedChange={(checked) => handleSwitchChange('twoFactorEnabled', checked)}
                       />
                     </div>
-                    
-                    <div className="mt-6">
-                      <h3 className="font-medium mb-2">Login Sessions</h3>
-                      <div className="border rounded-md p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium">Current Session</p>
-                            <p className="text-sm text-muted-foreground">Windows • Chrome • New York, US</p>
-                          </div>
-                          <div className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded text-xs">
-                            Active
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4">
-                      <Button variant="outline" className="text-destructive hover:text-destructive">
-                        Sign Out of All Devices
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -673,6 +778,111 @@ export default function ProfilePage() {
           </Tabs>
         </div>
       </div>
+      
+      {/* Password Change Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Enter your current password and a new password to update your credentials.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {passwordError && (
+              <div className="text-sm font-medium text-destructive">{passwordError}</div>
+            )}
+            
+            <div className="grid gap-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  name="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordInputChange}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('currentPassword')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                >
+                  {showCurrentPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  name="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordInputChange}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('newPassword')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                >
+                  {showNewPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Password must be at least 8 characters long.
+              </p>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordInputChange}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility('confirmPassword')}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleChangePassword} disabled={passwordLoading}>
+              {passwordLoading ? "Updating..." : "Update Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

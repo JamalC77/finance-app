@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
       <main className="flex-grow container mx-auto px-4 py-8 max-w-4xl">
         <div className="prose prose-sm sm:prose lg:prose-lg mx-auto">
           <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
-          <p className="text-muted-foreground mb-4">Last Updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          <p className="text-muted-foreground mb-4">Last Updated: March 14, 2025</p>
           
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
