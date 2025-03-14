@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  output: 'standalone',
   eslint: {
     // Disable ESLint during production builds
     ignoreDuringBuilds: true,
@@ -9,6 +9,9 @@ const nextConfig = {
     // Disable TypeScript checking during builds as well
     ignoreBuildErrors: true,
   },
+  // Disable React strict mode for more lenient rendering
+  reactStrictMode: false,
+  swcMinify: true,
 };
 
 module.exports = nextConfig; 
