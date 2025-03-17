@@ -129,8 +129,8 @@ export default function PrivacyPolicy() {
               If you have questions about this Privacy Policy or our data practices, please contact us at:
             </p>
             <p className="mt-2">
-              <strong>Email:</strong> privacy@cfoline.com<br />
-              <strong>Address:</strong> CFO Line, Texas, United States
+              <strong>Email:</strong> privacy@thecfoline.com<br />
+              <strong>Address:</strong> Brent Janss CPA PLLC, 1102 East 24th Houston, Texas, 77009
             </p>
           </section>
         </div>
