@@ -6,12 +6,13 @@
 const formatApiUrl = (url: string): string => {
   if (!url) return 'http://localhost:5000';
   
-  // Make sure URL has protocol
+  // Ensure URL has protocol
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return `https://${url}`;
   }
   
-  return url;
+  // Remove trailing slash if present
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
 // API configuration
