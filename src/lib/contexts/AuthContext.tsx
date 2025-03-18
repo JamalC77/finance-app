@@ -3,7 +3,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { jwtDecode } from 'jwt-decode';
-import { apiService } from '../contexts/ApiContext';
+import apiService from '../services/apiService';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await apiService.post('/api/auth/login', { email, password });
+      const response = await apiService.auth.login({ email, password });
       
       if (response.token) {
         localStorage.setItem('financeAppToken', response.token);
@@ -176,11 +176,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await apiService.post('/api/auth/register', { 
-        name, 
-        email, 
-        password 
-      });
+      const response = await apiService.auth.register({ name, email, password });
       
       if (response.token) {
         localStorage.setItem('financeAppToken', response.token);

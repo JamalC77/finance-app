@@ -47,20 +47,45 @@ class ApiClient {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
+
+    const serializedData = data ? JSON.stringify(data) : undefined;
+
+    // Log request details for debugging
+    console.log(`🚀 Making POST request to ${this.baseUrl}${endpoint}:`, {
+      url: `${this.baseUrl}${endpoint}`,
+      headers: headers,
+      data: data, // Log the actual data object
+      serializedData: serializedData, // Log the serialized JSON
+    });
     
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
       headers,
-      body: data ? JSON.stringify(data) : undefined,
+      body: serializedData,
       credentials: 'omit',
       mode: 'cors'
     });
+
+    // Log response details
+    console.log(`📥 Response from ${endpoint}:`, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries([...response.headers]),
+    });
     
     if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        console.log(`🚨 Error response data from ${endpoint}:`, errorData);
+      } catch (e) {
+        console.log(`🚨 Could not parse error response from ${endpoint}:`, e);
+      }
       throw await this.handleError(response);
     }
     
-    return response.json();
+    const responseData = await response.json();
+    console.log(`📦 Response data from ${endpoint}:`, responseData);
+    return responseData;
   }
 
   /**
@@ -182,10 +207,10 @@ export const authApi = {
   /**
    * Register user
    */
-  register: async (name: string, email: string, password: string) => {
+  register: async (data: { name: string, email: string, password: string }) => {
     return apiClient.post<{ token: string, user: any }>(
       API_CONFIG.ENDPOINTS.AUTH.REGISTER,
-      { name, email, password }
+      data
     );
   },
 };
