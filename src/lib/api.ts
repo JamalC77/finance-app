@@ -25,6 +25,8 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'GET',
       headers,
+      credentials: 'include',
+      mode: 'cors'
     });
     
     if (!response.ok) {
@@ -50,6 +52,8 @@ class ApiClient {
       method: 'POST',
       headers,
       body: data ? JSON.stringify(data) : undefined,
+      credentials: 'include',
+      mode: 'cors'
     });
     
     if (!response.ok) {
@@ -74,6 +78,8 @@ class ApiClient {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'DELETE',
       headers,
+      credentials: 'include',
+      mode: 'cors'
     });
     
     if (!response.ok) {
