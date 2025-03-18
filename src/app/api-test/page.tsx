@@ -2,6 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 
+// Add metadata for the page
+export const metadata = {
+  title: 'API Connection Test',
+  description: 'Test API connectivity and CORS configuration',
+};
+
+// Mark this page as static
+export const dynamic = 'force-static';
+
 export default function ApiTest() {
   const [apiUrl, setApiUrl] = useState('');
   const [results, setResults] = useState<any[]>([]);

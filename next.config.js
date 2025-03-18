@@ -13,19 +13,22 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // Properly exclude pages from static generation
-  exportPathMap: async function (defaultPathMap) {
-    // Create a new path map without the problematic pages
-    const filteredPathMap = {...defaultPathMap};
-    delete filteredPathMap['/api-connectivity-test'];
-    return filteredPathMap;
+  // Configure static generation
+  experimental: {
+    // Enable static generation for app directory
+    appDir: true,
   },
   
-  // Handle page extension so it doesn't interfere with build
-  pageExtensions: ['tsx', 'ts', 'jsx', 'js'].filter(ext => 
-    // Exclude specific pages by adding conditional logic
-    !(ext === 'tsx' && process.env.NODE_ENV === 'production')
-  ),
+  // Configure redirects at the Next.js level
+  async redirects() {
+    return [
+      {
+        source: '/api-connectivity-test',
+        destination: '/api-test',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig; 
