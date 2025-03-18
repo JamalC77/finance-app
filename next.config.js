@@ -13,12 +13,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // Configure static generation
-  experimental: {
-    // Enable static generation for app directory
-    appDir: true,
-  },
-  
   // Configure redirects at the Next.js level
   async redirects() {
     return [
