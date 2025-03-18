@@ -2,20 +2,11 @@
   command = "npm run build"
   publish = ".next"
 
-[build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
-
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Handle client-side routes
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = false
-  conditions = {Client_IP = ["::1", "127.0.0.1"]}
-
-# Exclude problematic pages from static export
-[functions]
-  excluded_patterns = ["api-connectivity-test"] 
+  from = "/api-connectivity-test"
+  to = "/api-test"
+  status = 301
+  force = true 
