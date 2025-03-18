@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useApi } from '../lib/contexts/ApiContext';
+'use client';
+
+import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 
 interface TestResult {
   endpoint: string;
@@ -11,10 +13,9 @@ interface TestResult {
 }
 
 const ApiConnectivityTest = () => {
-  const api = useApi();
   const [results, setResults] = useState<TestResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [apiUrl, setApiUrl] = useState(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+  const [apiUrl, setApiUrl] = useState(process.env.NEXT_PUBLIC_API_URL || 'https://cfo-line-api.up.railway.app');
   const [manualEndpoint, setManualEndpoint] = useState('/health');
 
   // Endpoints to test
@@ -189,4 +190,7 @@ const ApiConnectivityTest = () => {
   );
 };
 
-export default ApiConnectivityTest; 
+// Export the component with SSR disabled
+export default dynamic(() => Promise.resolve(ApiConnectivityTest), {
+  ssr: false
+}); 
