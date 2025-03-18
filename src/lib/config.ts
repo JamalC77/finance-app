@@ -2,10 +2,22 @@
  * Configuration settings for the Finance App frontend
  */
 
+// Helper to ensure the URL has the correct format
+const formatApiUrl = (url: string): string => {
+  if (!url) return 'http://localhost:5000';
+  
+  // Make sure URL has protocol
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  
+  return url;
+};
+
 // API configuration
 export const API_CONFIG = {
   // Base URL for API requests
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
+  BASE_URL: formatApiUrl(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'),
   
   // API endpoints
   ENDPOINTS: {
