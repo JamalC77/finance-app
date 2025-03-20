@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, DollarSign } from "lucide-react";
 import { API_CONFIG } from "@/lib/config";
 
 export default function ForgotPasswordPage() {
@@ -53,50 +52,73 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl">Reset Password</CardTitle>
-          <CardDescription>Enter your email to receive a password reset link</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {success ? (
-            <Alert className="bg-green-50 border-green-200">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">Email Sent</AlertTitle>
-              <AlertDescription className="text-green-700">
-                If an account exists with this email, you will receive a password reset link shortly. Please check your inbox and spam folder.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Error</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending..." : "Send Reset Link"}
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <Link href="/auth/login" className="text-sm text-primary hover:underline">
-            Back to login
+    <div className="flex flex-col min-h-screen">
+      {/* Landing Page Navbar */}
+      <header className="bg-background border-b">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="flex items-center">
+            <DollarSign className="h-8 w-8 text-primary mr-2" />
+            <span className="text-xl font-bold">CFO Line</span>
           </Link>
-        </CardFooter>
-      </Card>
+          <div className="flex items-center space-x-4">
+            <Link href="/pricing">
+              <Button variant="ghost">Pricing</Button>
+            </Link>
+            <Link href="/auth/login">
+              <Button variant="ghost">Log In</Button>
+            </Link>
+            <Link href="/auth/register">
+              <Button>Sign Up</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-grow items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl">Reset Password</CardTitle>
+            <CardDescription>Enter your email to receive a password reset link</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {success ? (
+              <Alert className="bg-green-50 border-green-200">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-800">Email Sent</AlertTitle>
+                <AlertDescription className="text-green-700">
+                  If an account exists with this email, you will receive a password reset link shortly. Please check your inbox and spam folder.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Sending..." : "Send Reset Link"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center">
+            <Link href="/auth/login" className="text-sm text-primary hover:underline">
+              Back to login
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   );
 }
