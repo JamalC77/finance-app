@@ -758,7 +758,7 @@ export default function ProfilePage() {
                   
                   <Separator className="my-6" />
                   
-                  <div className="space-y-4">
+                  {/* <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-medium">Two-Factor Authentication</h3>
@@ -771,7 +771,7 @@ export default function ProfilePage() {
                         onCheckedChange={(checked) => handleSwitchChange('twoFactorEnabled', checked)}
                       />
                     </div>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             </TabsContent>
