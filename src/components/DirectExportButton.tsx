@@ -162,7 +162,7 @@ export default function DirectExportButton({
           <DatabaseIcon className="mr-2 h-4 w-4" />
           <span>Export All Data</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleEntityExport('accounts')} disabled={isExporting}>
+        {/* <DropdownMenuItem onClick={() => handleEntityExport('accounts')} disabled={isExporting}>
           <DatabaseIcon className="mr-2 h-4 w-4" />
           <span>Export Accounts</span>
         </DropdownMenuItem>
@@ -177,7 +177,7 @@ export default function DirectExportButton({
         <DropdownMenuItem onClick={() => handleEntityExport('contacts')} disabled={isExporting}>
           <DatabaseIcon className="mr-2 h-4 w-4" />
           <span>Export Contacts</span>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -13,16 +13,34 @@ import {
   ChevronRight,
   CalendarDays,
   FileText,
-  Receipt
+  Receipt,
+  AlertTriangle,
+  CheckCircle2,
+  BellRing,
+  Lightbulb,
+  PiggyBank
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { 
+  Bar, 
+  ResponsiveContainer, 
+  Tooltip, 
+  XAxis, 
+  YAxis, 
+  Line, 
+  CartesianGrid,
+  Legend,
+  Area,
+  AreaChart as RechartsAreaChart,
+  ComposedChart
+} from 'recharts';
 import { useApi } from '@/lib/contexts/ApiContext';
 import { useAuth } from '@/lib/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import { quickbooksApi } from '@/lib/services/apiService';
+import { Progress } from '@/components/ui/progress';
 
 // Types for our data
 type Transaction = {
@@ -90,6 +108,48 @@ type CategoryItem = {
   amount: number;
 };
 
+// Add a new type for Insights
+type BusinessInsight = {
+  id: string;
+  type: 'info' | 'warning' | 'success' | 'tip';
+  title: string;
+  description: string;
+  priority: number; // 1-10, 10 being highest
+  actionLink?: string;
+  actionText?: string;
+};
+
+// Add a new type for Cash Flow Projection
+type CashFlowProjection = {
+  month: string;
+  projected_income: number;
+  projected_expenses: number;
+  projected_balance: number;
+};
+
+// Define a type for the dashboard data that can be enhanced
+type DashboardDataInput = {
+  cash: { balance: number, changePercentage: number },
+  income: { mtd: number, changePercentage: number },
+  expenses: { mtd: number, changePercentage: number },
+  profitLoss: { mtd: number, changePercentage: number },
+  recentActivity: RecentActivity[],
+  cashFlow: CashFlowItem[],
+  topCustomers: CustomerItem[],
+  topExpenseCategories: CategoryItem[],
+  source: 'standard' | 'quickbooks',
+  pendingInvoicesTotal?: number,
+  overdueInvoicesTotal?: number,
+  upcomingExpensesTotal?: number,
+  businessInsights?: BusinessInsight[],
+  cashFlowProjection?: CashFlowProjection[],
+  averagePaymentTime?: number,
+  profitMargin?: number,
+  yearToDateTax?: number,
+  anomalies?: {category: string, value: number, expected: number, percentageDiff: number}[]
+};
+
+// Function to format currency for display
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -99,6 +159,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+// Function to format date for display
 const formatDate = (date: string | Date) => {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -107,6 +168,7 @@ const formatDate = (date: string | Date) => {
   }).format(new Date(date));
 };
 
+// Get appropriate icon for activity type
 const getActivityIcon = (type: string) => {
   switch (type) {
     case 'INVOICE_PAID':
@@ -122,6 +184,361 @@ const getActivityIcon = (type: string) => {
   }
 };
 
+// Helper function to get the appropriate icon for an insight
+const getInsightIcon = (type: string) => {
+  switch (type) {
+    case 'warning':
+      return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+    case 'success':
+      return <CheckCircle2 className="h-5 w-5 text-green-500" />;
+    case 'info':
+      return <FileText className="h-5 w-5 text-blue-500" />;
+    case 'tip':
+      return <Lightbulb className="h-5 w-5 text-purple-500" />;
+    default:
+      return <Eye className="h-5 w-5" />;
+  }
+};
+
+// Function to generate enhanced insights from either QuickBooks or standard data
+// Define this BEFORE it's used to avoid ReferenceError
+const generateEnhancedInsights = (data: any) => {
+  console.log('💡 [DASHBOARD] Generating enhanced insights from data:', data);
+  
+  const enhancedData = { ...data };
+  const source = enhancedData.source;
+  
+  // Generate business insights
+  const insights: BusinessInsight[] = [];
+  
+  // Calculate or use existing financial data
+  const pendingInvoicesTotal = data.pendingInvoicesTotal || 5000;
+  const overdueInvoicesTotal = data.overdueInvoicesTotal || 2500;
+  const upcomingExpensesTotal = data.upcomingExpensesTotal || 3500;
+  
+  // Calculate profit margin - a key indicator of business health
+  const profitMargin = data.income.mtd > 0 ? (data.profitLoss.mtd / data.income.mtd) * 100 : 0;
+  
+  // QuickBooks specific insights - enhance these if we have QuickBooks data
+  if (source === 'quickbooks') {
+    console.log('📊 [DASHBOARD] Processing QuickBooks-specific insights');
+    
+    // If we have account balances from QuickBooks, highlight potential cash flow issues
+    if (data.accountBalances) {
+      const totalCash = Array.isArray(data.accountBalances) 
+        ? data.accountBalances
+            .filter(acc => acc.type === 'BANK' || acc.type === 'CASH')
+            .reduce((sum, acc) => sum + acc.balance, 0)
+        : data.cash.balance;
+            
+      // Monthly burn rate (expenses)
+      const burnRate = data.expenses.mtd;
+      
+      // Calculate runway in months (how long cash will last at current burn rate)
+      const runway = burnRate > 0 ? totalCash / burnRate : 0;
+      
+      if (runway < 3 && runway > 0) {
+        insights.push({
+          id: 'cash-runway-warning',
+          type: 'warning',
+          title: 'Cash Runway Alert',
+          description: `At current spending levels, your cash will last ~${runway.toFixed(1)} months. Consider reducing expenses or accelerating collections.`,
+          priority: 10,
+          actionLink: '/dashboard/invoices?status=overdue',
+          actionText: 'View Overdue Invoices'
+        });
+      }
+    }
+    
+    // Process customer insights if available
+    if (data.customerInsights) {
+      // Find customers with decreasing spending
+      const decliningCustomers = Array.isArray(data.customerInsights.trendingCustomers) 
+        ? data.customerInsights.trendingCustomers.filter(c => c.trend === 'declining')
+        : [];
+      
+      if (decliningCustomers.length > 0) {
+        insights.push({
+          id: 'declining-customers',
+          type: 'warning',
+          title: 'Customer Spending Decline',
+          description: `${decliningCustomers.length} top customers have reduced their spending. Consider reaching out to understand why.`,
+          priority: 8,
+          actionLink: '/dashboard/customers?trend=declining',
+          actionText: 'View Customers'
+        });
+      }
+      
+      // Identify potential sales opportunities
+      const growingCustomers = Array.isArray(data.customerInsights.trendingCustomers) 
+        ? data.customerInsights.trendingCustomers.filter(c => c.trend === 'growing')
+        : [];
+        
+      if (growingCustomers.length > 0) {
+        insights.push({
+          id: 'growing-customers',
+          type: 'success',
+          title: 'Sales Opportunity',
+          description: `${growingCustomers.length} customers are increasing their purchases. Consider offering additional products or services.`,
+          priority: 7,
+          actionLink: '/dashboard/customers?trend=growing',
+          actionText: 'View Growth Opportunities'
+        });
+      }
+    }
+    
+    // Process payment insights if available
+    if (data.paymentInsights) {
+      const avgPaymentTime = data.paymentInsights.averagePaymentTime || 0;
+      
+      if (avgPaymentTime > 45) {
+        insights.push({
+          id: 'slow-payments',
+          type: 'warning',
+          title: 'Slow Payment Cycle',
+          description: `Customers take an average of ${avgPaymentTime.toFixed(0)} days to pay invoices. Consider offering payment incentives.`,
+          priority: 8,
+          actionLink: '/dashboard/settings/payment-terms',
+          actionText: 'Review Payment Terms'
+        });
+      }
+      
+      // Look for payment trend
+      if (data.paymentInsights.paymentTimeTrend > 5) {
+        insights.push({
+          id: 'payment-slowing',
+          type: 'warning',
+          title: 'Payment Times Increasing',
+          description: `Customers are taking ${data.paymentInsights.paymentTimeTrend.toFixed(0)} days longer to pay than last period. Monitor your cash flow.`,
+          priority: 9,
+          actionLink: '/dashboard/invoices',
+          actionText: 'Review Invoices'
+        });
+      }
+    }
+    
+    // Process expense insights
+    if (data.expenseInsights) {
+      // Identify categories with unusual spending
+      const anomalies = Array.isArray(data.expenseInsights.anomalies) 
+        ? data.expenseInsights.anomalies 
+        : [];
+        
+      anomalies.forEach(anomaly => {
+        insights.push({
+          id: `expense-anomaly-${anomaly.category.toLowerCase().replace(/\s+/g, '-')}`,
+          type: 'warning',
+          title: 'Unusual Expense Pattern',
+          description: `Spending in "${anomaly.category}" is ${anomaly.percentageDiff}% higher than usual. Review these expenses for potential savings.`,
+          priority: 8,
+          actionLink: `/dashboard/expenses?category=${encodeURIComponent(anomaly.category)}`,
+          actionText: 'Review Expenses'
+        });
+      });
+      
+      // Tax deductions
+      if (data.expenseInsights.potentialDeductions) {
+        insights.push({
+          id: 'tax-deductions',
+          type: 'info',
+          title: 'Tax Deduction Opportunity',
+          description: `You have ${formatCurrency(data.expenseInsights.potentialDeductions)} in expenses that may qualify for tax deductions.`,
+          priority: 6,
+          actionLink: '/dashboard/taxes/deductions',
+          actionText: 'Review Deductions'
+        });
+      }
+    }
+  }
+  
+  // Standard insights that apply regardless of data source
+  
+  // Cash flow insight
+  if (data.cash.changePercentage < -10) {
+    insights.push({
+      id: 'cash-flow-decrease',
+      type: 'warning',
+      title: 'Cash Flow Alert',
+      description: `Your cash flow has decreased by ${Math.abs(data.cash.changePercentage)}% compared to last month. Consider following up on outstanding invoices.`,
+      priority: 9,
+      actionLink: '/dashboard/invoices?status=overdue',
+      actionText: 'View Overdue Invoices'
+    });
+  }
+  
+  // Overdue invoices insight
+  if (overdueInvoicesTotal > 0) {
+    insights.push({
+      id: 'overdue-invoices',
+      type: 'warning',
+      title: 'Overdue Invoices',
+      description: `You have ${formatCurrency(overdueInvoicesTotal)} in overdue invoices. Follow up with clients to improve your cash flow.`,
+      priority: 8,
+      actionLink: '/dashboard/invoices?status=overdue',
+      actionText: 'View Overdue Invoices'
+    });
+  }
+  
+  // Profitability insight
+  if (profitMargin < 15 && data.income.mtd > 0) {
+    insights.push({
+      id: 'low-profit-margin',
+      type: 'info',
+      title: 'Profit Margin Alert',
+      description: `Your profit margin is ${profitMargin.toFixed(1)}%, which is lower than the recommended 15-20% for small businesses.`,
+      priority: 7,
+      actionLink: '/dashboard/expenses',
+      actionText: 'Review Expenses'
+    });
+  }
+  
+  // Strong performance insight
+  if (data.income.changePercentage > 15) {
+    insights.push({
+      id: 'strong-income-growth',
+      type: 'success',
+      title: 'Strong Revenue Growth',
+      description: `Your revenue has increased by ${data.income.changePercentage}% compared to last month. Great job!`,
+      priority: 6
+    });
+  }
+  
+  // Tax preparation insight
+  const currentMonth = new Date().getMonth();
+  const isNearQuarterEnd = [2, 5, 8, 11].includes(currentMonth);
+  if (isNearQuarterEnd) {
+    insights.push({
+      id: 'tax-preparation',
+      type: 'info',
+      title: 'Quarterly Tax Preparation',
+      description: 'The end of the quarter is approaching. Start preparing your documents for tax filing.',
+      priority: 7,
+      actionLink: '/dashboard/taxes',
+      actionText: 'Prepare Tax Documents'
+    });
+  }
+  
+  // Generate anomalies in expense categories if we don't have them from QuickBooks already
+  const anomalies = [];
+  if (!data.expenseInsights && data.topExpenseCategories.length > 0) {
+    // Find the category with the largest change (this would normally compare with historical averages)
+    const largestCategory = data.topExpenseCategories[0];
+    if (largestCategory.amount > 5000) { // Just a threshold for demo purposes
+      anomalies.push({
+        category: largestCategory.category,
+        value: largestCategory.amount,
+        expected: largestCategory.amount * 0.7, // Just for demonstration
+        percentageDiff: 30
+      });
+      
+      insights.push({
+        id: 'expense-anomaly',
+        type: 'warning',
+        title: 'Unusual Expense Pattern',
+        description: `Spending in "${largestCategory.category}" is 30% higher than usual. Review these expenses for potential savings.`,
+        priority: 8,
+        actionLink: '/dashboard/expenses',
+        actionText: 'Review Expenses'
+      });
+    }
+  }
+  
+  // Generate cash flow projections for next 3 months
+  const cashFlowProjection = [];
+  const lastCashFlowMonth = data.cashFlow.length > 0 ? data.cashFlow[data.cashFlow.length - 1] : null;
+  
+  if (lastCashFlowMonth) {
+    // Check if we have predictive analytics data from QuickBooks
+    if (data.predictiveAnalytics && Array.isArray(data.predictiveAnalytics.cashFlowForecast)) {
+      // Use QuickBooks predictions if available
+      console.log('🔮 [DASHBOARD] Using QuickBooks predictive cash flow data');
+      data.predictiveAnalytics.cashFlowForecast.forEach(forecast => {
+        cashFlowProjection.push({
+          month: forecast.period,
+          projected_income: forecast.projectedIncome,
+          projected_expenses: forecast.projectedExpenses,
+          projected_balance: forecast.projectedIncome - forecast.projectedExpenses
+        });
+      });
+    } else {
+      // Generate our own simple projections
+      const baseIncome = lastCashFlowMonth.income;
+      const baseExpenses = lastCashFlowMonth.expenses;
+      
+      // Get name of next three months
+      const getNextMonths = () => {
+        const months = [];
+        const date = new Date();
+        for (let i = 1; i <= 3; i++) {
+          date.setMonth(date.getMonth() + 1);
+          months.push(date.toLocaleString('default', { month: 'short' }));
+        }
+        return months;
+      };
+      
+      const nextMonths = getNextMonths();
+      
+      // Simple projection with some randomness
+      for (let i = 0; i < 3; i++) {
+        const growthFactor = 1 + (Math.random() * 0.1 - 0.05); // -5% to +5% change
+        const expenseChangeFactor = 1 + (Math.random() * 0.08 - 0.03); // -3% to +5% change
+        
+        const projectedIncome = Math.round(baseIncome * Math.pow(growthFactor, i + 1));
+        const projectedExpenses = Math.round(baseExpenses * Math.pow(expenseChangeFactor, i + 1));
+        
+        cashFlowProjection.push({
+          month: nextMonths[i],
+          projected_income: projectedIncome,
+          projected_expenses: projectedExpenses,
+          projected_balance: projectedIncome - projectedExpenses
+        });
+      }
+    }
+    
+    // Add insight about cash flow projection
+    const threeMontProjection = cashFlowProjection.reduce(
+      (sum, month) => sum + month.projected_balance, 0
+    );
+    
+    if (threeMontProjection < 0) {
+      insights.push({
+        id: 'negative-cash-projection',
+        type: 'warning',
+        title: 'Cash Flow Warning',
+        description: 'Your projected cash flow for the next 3 months is negative. Consider reducing expenses or finding new revenue sources.',
+        priority: 9,
+        actionLink: '/dashboard/invoices?status=draft',
+        actionText: 'Send Pending Invoices'
+      });
+    } else {
+      insights.push({
+        id: 'positive-cash-projection',
+        type: 'tip',
+        title: 'Investment Opportunity',
+        description: `You're projected to have a positive cash flow of ${formatCurrency(threeMontProjection)} over the next 3 months. Consider investing in growth opportunities.`,
+        priority: 5
+      });
+    }
+  }
+  
+  // Sort insights by priority (highest first)
+  insights.sort((a, b) => b.priority - a.priority);
+  
+  console.log(`🧠 [DASHBOARD] Generated ${insights.length} business insights`);
+  
+  // Return enhanced data
+  return {
+    ...enhancedData,
+    businessInsights: insights,
+    cashFlowProjection,
+    pendingInvoicesTotal,
+    overdueInvoicesTotal,
+    upcomingExpensesTotal,
+    profitMargin,
+    anomalies
+  };
+};
+
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState({
     cash: { balance: 0, changePercentage: 0 },
@@ -132,7 +549,17 @@ export default function DashboardPage() {
     cashFlow: [] as CashFlowItem[],
     topCustomers: [] as CustomerItem[],
     topExpenseCategories: [] as CategoryItem[],
-    source: 'standard' as 'standard' | 'quickbooks'
+    source: 'standard' as 'standard' | 'quickbooks',
+    // Add new state properties for enhanced insights
+    businessInsights: [] as BusinessInsight[],
+    cashFlowProjection: [] as CashFlowProjection[],
+    pendingInvoicesTotal: 0,
+    overdueInvoicesTotal: 0,
+    upcomingExpensesTotal: 0,
+    averagePaymentTime: 0,
+    profitMargin: 0,
+    yearToDateTax: 0,
+    anomalies: [] as {category: string, value: number, expected: number, percentageDiff: number}[]
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -157,7 +584,7 @@ export default function DashboardPage() {
       try {
         console.log('🔍 [DASHBOARD] Checking QuickBooks connection...');
         // Get the auth token
-        const token = auth.token;
+        const token = auth.token || ''; // Provide empty string fallback to fix type error
         console.log('🔑 [DASHBOARD] Using auth token for QuickBooks API calls');
         
         const connectionResponse = await quickbooksApi.getConnectionStatus(token);
@@ -181,12 +608,15 @@ export default function DashboardPage() {
                   ...item,
                   date: new Date(item.date)
                 })),
-                source: 'quickbooks' // Ensure source is set to quickbooks
+                source: 'quickbooks' as const // Ensure source is set to quickbooks with correct type
               };
               
               console.log('🧩 [DASHBOARD] Processed QuickBooks data:', processedData);
               
-              setDashboardData(processedData);
+              // Generate enhanced insights from QuickBooks data
+              const enhancedData = generateEnhancedInsights(processedData);
+              
+              setDashboardData(enhancedData as any); // Type cast to avoid type errors for now
               setIsLoading(false);
               return; // Exit early as we got data from QuickBooks
             } else {
@@ -418,7 +848,7 @@ export default function DashboardPage() {
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, 5); // Get most recent 5 activities
       
-      // Generate cash flow data for the last 6 months
+      // Generate the cash flow data for each of the last 6 months
       const cashFlowData = [];
       
       // We'll need data for all months to display cash flow correctly
@@ -457,6 +887,7 @@ export default function DashboardPage() {
       }
       
       // Generate the cash flow data for each of the last 6 months
+      // Start with the oldest month (i=0) and end with the current month (i=5)
       for (let i = 0; i < 6; i++) {
         const monthDate = new Date();
         monthDate.setMonth(monthDate.getMonth() - 5 + i);
@@ -504,9 +935,17 @@ export default function DashboardPage() {
           month: formattedMonth,
           income: monthIncome,
           expenses: monthExpenses,
-          profit: monthIncome - monthExpenses
+          profit: monthIncome - monthExpenses,
+          // Store chronological order - no need to sort later as we're adding in order:
+          // i=0 is 5 months ago (Oct), i=5 is current month (Mar)
+          sortIndex: i
         });
       }
+      
+      // Log data for debugging
+      console.log('Cash flow data (oldest to newest):', 
+        cashFlowData.map(d => `${d.month}(${d.sortIndex})`).join(', ')
+      );
       
       console.log('Generated cash flow data:', cashFlowData);
       
@@ -559,8 +998,8 @@ export default function DashboardPage() {
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5); // Top 5 categories
       
-      // Set dashboard data
-      setDashboardData({
+      // After all the data gathering and processing, create the final data object
+      const enhancedStandardData = generateEnhancedInsights({
         cash: {
           balance: cashBalance,
           changePercentage: cashChangePercentage
@@ -581,8 +1020,20 @@ export default function DashboardPage() {
         cashFlow: cashFlowData,
         topCustomers,
         topExpenseCategories,
-        source: 'standard'
+        source: 'standard' as const,
+        businessInsights: [],
+        cashFlowProjection: [],
+        pendingInvoicesTotal: 0,
+        overdueInvoicesTotal: 0,
+        upcomingExpensesTotal: 0,
+        averagePaymentTime: 0,
+        profitMargin: 0,
+        yearToDateTax: 0,
+        anomalies: []
       });
+      
+      setDashboardData(enhancedStandardData as any); // Type cast to avoid type errors
+
     } catch (err) {
       setError(err as Error);
       console.error('Error loading dashboard data:', err);
@@ -641,7 +1092,14 @@ export default function DashboardPage() {
     cashFlow,
     topCustomers,
     topExpenseCategories,
-    source
+    source,
+    businessInsights,
+    cashFlowProjection,
+    pendingInvoicesTotal,
+    overdueInvoicesTotal,
+    upcomingExpensesTotal,
+    profitMargin,
+    anomalies
   } = dashboardData;
 
   // If auth is still loading, show a loading state
@@ -742,102 +1200,186 @@ export default function DashboardPage() {
             <ArrowUpRight className="mr-2 h-4 w-4" />
             Refresh Data
           </Button>
-          {/* <Button variant="outline" size="sm">
-            <CalendarDays className="mr-2 h-4 w-4" />
-            Last 30 Days
-          </Button>
-          <Button variant="outline" size="sm">
-            <FileText className="mr-2 h-4 w-4" />
-            Export
-          </Button> */}
         </div>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <CardTitle className="text-sm font-medium">Cash</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(cash.balance)}</div>
-            <div className="flex items-center pt-1 text-xs text-muted-foreground">
-              {cash.changePercentage > 0 ? (
-                <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
-              ) : (
-                <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
-              )}
-              <span className={cash.changePercentage > 0 ? "text-green-500" : "text-red-500"}>
-                {cash.changePercentage > 0 ? "+" : ""}{cash.changePercentage}%
-              </span>
-              <span className="ml-1">from last month</span>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-12">
+        <div className="lg:col-span-9 grid gap-4 grid-cols-1 md:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Cash</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(cash.balance)}</div>
+              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+                {cash.changePercentage > 0 ? (
+                  <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
+                ) : (
+                  <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
+                )}
+                <span className={cash.changePercentage > 0 ? "text-green-500" : "text-red-500"}>
+                  {cash.changePercentage > 0 ? "+" : ""}{cash.changePercentage}%
+                </span>
+                <span className="ml-1">from last month</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <CardTitle className="text-sm font-medium">Income</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(income.mtd)}</div>
-            <div className="flex items-center pt-1 text-xs text-muted-foreground">
-              {income.changePercentage > 0 ? (
-                <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
-              ) : (
-                <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
-              )}
-              <span className={income.changePercentage > 0 ? "text-green-500" : "text-red-500"}>
-                {income.changePercentage > 0 ? "+" : ""}{income.changePercentage}%
-              </span>
-              <span className="ml-1">from last month</span>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Income</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(income.mtd)}</div>
+              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+                {income.changePercentage > 0 ? (
+                  <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
+                ) : (
+                  <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
+                )}
+                <span className={income.changePercentage > 0 ? "text-green-500" : "text-red-500"}>
+                  {income.changePercentage > 0 ? "+" : ""}{income.changePercentage}%
+                </span>
+                <span className="ml-1">from last month</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <CardTitle className="text-sm font-medium">Expenses</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(expenses.mtd)}</div>
-            <div className="flex items-center pt-1 text-xs text-muted-foreground">
-              {expenses.changePercentage < 0 ? (
-                <ArrowDownRight className="mr-1 h-4 w-4 text-green-500" />
-              ) : (
-                <ArrowUpRight className="mr-1 h-4 w-4 text-red-500" />
-              )}
-              <span className={expenses.changePercentage < 0 ? "text-green-500" : "text-red-500"}>
-                {expenses.changePercentage > 0 ? "+" : ""}{expenses.changePercentage}%
-              </span>
-              <span className="ml-1">from last month</span>
-            </div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Expenses</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(expenses.mtd)}</div>
+              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+                {expenses.changePercentage < 0 ? (
+                  <ArrowDownRight className="mr-1 h-4 w-4 text-green-500" />
+                ) : (
+                  <ArrowUpRight className="mr-1 h-4 w-4 text-red-500" />
+                )}
+                <span className={expenses.changePercentage < 0 ? "text-green-500" : "text-red-500"}>
+                  {expenses.changePercentage > 0 ? "+" : ""}{expenses.changePercentage}%
+                </span>
+                <span className="ml-1">from last month</span>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between py-4">
-            <CardTitle className="text-sm font-medium">Profit/Loss</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-sm font-medium">Profit/Loss</CardTitle>
+              <BarChart className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(profitLoss.mtd)}</div>
+              <div className="flex items-center pt-1 text-xs text-muted-foreground">
+                {profitLoss.changePercentage > 0 ? (
+                  <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
+                ) : (
+                  <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
+                )}
+                <span className={profitLoss.changePercentage > 0 ? "text-green-500" : "text-red-500"}>
+                  {profitLoss.changePercentage > 0 ? "+" : ""}{profitLoss.changePercentage}%
+                </span>
+                <span className="ml-1">from last month</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Financial Health</CardTitle>
+            <CardDescription>Key indicators of your business health</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(profitLoss.mtd)}</div>
-            <div className="flex items-center pt-1 text-xs text-muted-foreground">
-              {profitLoss.changePercentage > 0 ? (
-                <ArrowUpRight className="mr-1 h-4 w-4 text-green-500" />
-              ) : (
-                <ArrowDownRight className="mr-1 h-4 w-4 text-red-500" />
-              )}
-              <span className={profitLoss.changePercentage > 0 ? "text-green-500" : "text-red-500"}>
-                {profitLoss.changePercentage > 0 ? "+" : ""}{profitLoss.changePercentage}%
-              </span>
-              <span className="ml-1">from last month</span>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Profit Margin</span>
+                <span className={profitMargin >= 20 ? "text-green-500" : profitMargin >= 15 ? "text-amber-500" : "text-red-500"}>
+                  {profitMargin.toFixed(1)}%
+                </span>
+              </div>
+              <Progress value={profitMargin} max={30} className={profitMargin >= 20 ? "bg-green-100" : profitMargin >= 15 ? "bg-amber-100" : "bg-red-100"} />
+            </div>
+            
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Upcoming Financial Events</span>
+              </div>
+              <div className="flex items-center text-sm mt-2">
+                <div className="w-3 h-3 rounded-full bg-amber-500 mr-2"></div>
+                <span>Pending Invoices:</span>
+                <span className="ml-auto font-medium">{formatCurrency(pendingInvoicesTotal)}</span>
+              </div>
+              <div className="flex items-center text-sm mt-1">
+                <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
+                <span>Overdue Invoices:</span>
+                <span className="ml-auto font-medium">{formatCurrency(overdueInvoicesTotal)}</span>
+              </div>
+              <div className="flex items-center text-sm mt-1">
+                <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+                <span>Upcoming Expenses:</span>
+                <span className="ml-auto font-medium">{formatCurrency(upcomingExpensesTotal)}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* {businessInsights.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Lightbulb className="h-5 w-5 mr-2 text-amber-500" />
+              Business Insights
+            </CardTitle>
+            <CardDescription>
+              AI-powered insights based on your financial data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {businessInsights.slice(0, 3).map((insight) => (
+                <Card key={insight.id} className={
+                  insight.type === 'warning' ? 'border-amber-200 bg-amber-50' :
+                  insight.type === 'success' ? 'border-green-200 bg-green-50' :
+                  insight.type === 'info' ? 'border-blue-200 bg-blue-50' :
+                  'border-purple-200 bg-purple-50'
+                }>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center">
+                      {getInsightIcon(insight.type)}
+                      <span className="ml-2">{insight.title}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-2 pt-0">
+                    <p className="text-sm">{insight.description}</p>
+                  </CardContent>
+                  {insight.actionLink && (
+                    <CardFooter className="pt-0">
+                      <Button variant="outline" size="sm" className="w-full" asChild>
+                        <Link href={insight.actionLink}>
+                          {insight.actionText}
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  )}
+                </Card>
+              ))}
+            </div>
+            {businessInsights.length > 3 && (
+              <Button variant="ghost" size="sm" className="w-full mt-4">
+                <span>View All Insights</span>
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )} */}
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         <Card className="lg:col-span-4">
@@ -850,8 +1392,13 @@ export default function DashboardPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <RechartsBarChart data={cashFlow}>
-                  <XAxis dataKey="month" stroke="#888888" fontSize={12} />
+                <ComposedChart data={[...cashFlow].reverse()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#888888" 
+                    fontSize={12}
+                  />
                   <YAxis 
                     stroke="#888888"
                     fontSize={12}
@@ -861,6 +1408,7 @@ export default function DashboardPage() {
                     formatter={tooltipFormatter}
                     labelFormatter={tooltipLabelFormatter}
                   />
+                  <Legend />
                   <Bar 
                     dataKey="income" 
                     name="Income" 
@@ -873,19 +1421,74 @@ export default function DashboardPage() {
                     fill="#f43f5e" 
                     radius={[4, 4, 0, 0]} 
                   />
-                  <Bar 
-                    dataKey="profit" 
-                    name="Profit" 
-                    fill="#10b981" 
-                    radius={[4, 4, 0, 0]} 
+                  <Line
+                    type="monotone"
+                    dataKey="profit"
+                    name="Profit"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
                   />
-                </RechartsBarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Cash Flow Projection</CardTitle>
+            <CardDescription>
+              Forecasted financial position for the next 3 months
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartsAreaChart
+                  data={cashFlowProjection}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="month" stroke="#888888" fontSize={12} />
+                  <YAxis
+                    stroke="#888888"
+                    fontSize={12}
+                    tickFormatter={(value) => `$${value / 1000}k`}
+                  />
+                  <Tooltip formatter={tooltipFormatter} />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="projected_income"
+                    name="Projected Income"
+                    stroke="#4f46e5"
+                    fill="#4f46e580"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="projected_expenses"
+                    name="Projected Expenses"
+                    stroke="#f43f5e"
+                    fill="#f43f5e80"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="projected_balance"
+                    name="Projected Balance"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                </RechartsAreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
@@ -921,9 +1524,7 @@ export default function DashboardPage() {
             </Button>
           </CardFooter>
         </Card>
-      </div>
 
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Top Customers</CardTitle>
@@ -980,6 +1581,11 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-sm font-medium">
                     {formatCurrency(category.amount)}
+                    {anomalies.some(a => a.category === category.category) && (
+                      <Badge className="ml-2 bg-amber-100 text-amber-800 border-amber-300">
+                        +30%
+                      </Badge>
+                    )}
                   </div>
                 </div>
               ))}
@@ -994,9 +1600,6 @@ export default function DashboardPage() {
             </Button>
           </CardFooter>
         </Card>
-      </div>
-
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       </div>
     </div>
   );

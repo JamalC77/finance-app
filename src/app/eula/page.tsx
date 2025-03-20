@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Database } from 'lucide-react';
+import { Database, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function EULA() {
@@ -11,7 +11,7 @@ export default function EULA() {
       <header className="bg-background border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center">
-            <Database className="h-8 w-8 text-primary mr-2" />
+            <DollarSign className="h-8 w-8 text-primary mr-2" />
             <span className="text-xl font-bold">CFO Line</span>
           </Link>
           <div className="flex items-center space-x-4">
@@ -175,7 +175,7 @@ export default function EULA() {
         <div className="container mx-auto max-w-4xl">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
-              <Database className="h-5 w-5 text-primary mr-2" />
+              <DollarSign className="h-5 w-5 text-primary mr-2" />
               <span className="font-bold">CFO Line</span>
             </div>
             <div className="flex space-x-4 text-sm">
