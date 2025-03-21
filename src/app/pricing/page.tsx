@@ -135,7 +135,7 @@ export default function PricingPage() {
               {/* Enterprise Plan */}
               <Card className="flex flex-col border-2">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Personal CFO</CardTitle>
+                  <CardTitle className="text-2xl">Fractional CFO</CardTitle>
                   <CardDescription className="text-lg">Full-service accounting solution</CardDescription>
                   <div className="mt-4">
                     <span className="text-2xl font-bold">Custom Pricing</span>
@@ -149,7 +149,7 @@ export default function PricingPage() {
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                      <span>Personal CFO service</span>
+                      <span>Fractional CFO service</span>
                     </li>
                     <li className="flex items-start">
                       <Check className="h-5 w-5 text-primary mr-2 mt-0.5" />
@@ -200,9 +200,9 @@ export default function PricingPage() {
               </div>
 
               <div>
-                <h3 className="text-xl font-semibold mb-2">What's included in the Personal CFO service?</h3>
+                <h3 className="text-xl font-semibold mb-2">What's included in the Fractional CFO service?</h3>
                 <p className="text-muted-foreground">
-                  Our Personal CFO service provides you with dedicated financial expertise, strategic planning, and personalized accounting services
+                  Our Fractional CFO service provides you with dedicated financial expertise, strategic planning, and personalized accounting services
                   tailored to your business needs.
                 </p>
               </div>

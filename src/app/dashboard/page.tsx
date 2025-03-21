@@ -984,7 +984,7 @@ export default function DashboardPage() {
                 </div>
               ) : cashFlow.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={[...cashFlow].reverse()}>
+                  <ComposedChart data={[...cashFlow]}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                     <XAxis dataKey="month" stroke="#888888" fontSize={12} />
                     <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `$${value / 1000}k`} />
