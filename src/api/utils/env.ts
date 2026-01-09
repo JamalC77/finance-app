@@ -36,14 +36,10 @@ function isServerOnlyVariable(key: string): boolean {
 
 // Export commonly used environment variables
 export const env = {
-  // Client-safe variables
+  // Client-safe variables (NEXT_PUBLIC_ prefix means they're exposed to browser)
   API_URL: getEnvVariable('NEXT_PUBLIC_API_URL', '/api'),
   NEXTAUTH_URL: getEnvVariable('NEXTAUTH_URL', isBrowser ? window.location.origin : ''),
-  PLAID: {
-    CLIENT_ID: getEnvVariable('PLAID_CLIENT_ID', ''),
-    ENV: getEnvVariable('PLAID_ENV', 'sandbox'),
-  },
-  
+
   // Check if we're in a development environment
   NODE_ENV: process.env.NODE_ENV || 'development'
 };

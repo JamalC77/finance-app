@@ -1,55 +1,97 @@
-import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
-import { env } from '../utils/env';
+/**
+ * Plaid Service - Frontend API client
+ *
+ * NOTE: All Plaid API calls go through the backend.
+ * The frontend only uses Plaid Link for the user connection flow.
+ *
+ * Plaid integration status: PENDING (awaiting Plaid approval)
+ * When approved, set PLAID_CLIENT_ID and PLAID_SECRET in backend .env
+ */
 
-// Create and configure the Plaid client using environment variables
-const configuration = new Configuration({
-  basePath: PlaidEnvironments[env.PLAID.ENV],
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': env.PLAID.CLIENT_ID,
-      'PLAID-SECRET': env.PLAID.SECRET,
-    },
-  },
-});
-
-export const plaidClient = new PlaidApi(configuration);
+import { apiClient } from '../utils/apiClient';
 
 /**
- * Example function to create a link token
+ * Create a Plaid Link token
+ * The backend handles the actual Plaid API call
  */
-export async function createLinkToken(userId: string) {
+export async function createLinkToken(): Promise<{ link_token: string }> {
   try {
-    const response = await plaidClient.linkTokenCreate({
-      user: {
-        client_user_id: userId,
-      },
-      client_name: 'Finance App',
-      products: ['transactions'],
-      country_codes: ['US'],
-      language: 'en',
-    });
-
+    const response = await apiClient.post('/plaid/create-link-token');
     return response.data;
   } catch (error) {
-    console.error('Error creating link token:', error);
+    console.error('Error creating Plaid link token:', error);
     throw error;
   }
 }
 
 /**
- * Example function to exchange public token for access token
+ * Exchange a public token for an access token
+ * Called after user completes Plaid Link flow
  */
-export async function exchangePublicToken(publicToken: string) {
+export async function exchangePublicToken(publicToken: string, metadata: {
+  institution?: { name: string; institution_id: string };
+  accounts?: Array<{ id: string; name: string; type: string; subtype: string }>;
+}): Promise<{ success: boolean; accountId?: string }> {
   try {
-    const response = await plaidClient.itemPublicTokenExchange({
-      public_token: publicToken,
+    const response = await apiClient.post('/plaid/exchange-public-token', {
+      publicToken,
+      institutionName: metadata.institution?.name,
+      institutionId: metadata.institution?.institution_id,
+      accounts: metadata.accounts,
     });
-
     return response.data;
   } catch (error) {
-    console.error('Error exchanging public token:', error);
+    console.error('Error exchanging Plaid public token:', error);
     throw error;
   }
 }
 
-// Add more Plaid service functions as needed 
+/**
+ * Get linked bank accounts
+ */
+export async function getLinkedAccounts(): Promise<Array<{
+  id: string;
+  name: string;
+  type: string;
+  subtype: string;
+  mask: string;
+  balance: number;
+}>> {
+  try {
+    const response = await apiClient.get('/plaid/accounts');
+    return response.data;
+  } catch (error) {
+    console.error('Error getting linked accounts:', error);
+    throw error;
+  }
+}
+
+/**
+ * Sync transactions for a linked account
+ */
+export async function syncTransactions(accountId: string): Promise<{
+  added: number;
+  modified: number;
+  removed: number;
+}> {
+  try {
+    const response = await apiClient.post(`/plaid/accounts/${accountId}/sync`);
+    return response.data;
+  } catch (error) {
+    console.error('Error syncing Plaid transactions:', error);
+    throw error;
+  }
+}
+
+/**
+ * Remove a linked bank connection
+ */
+export async function unlinkAccount(accountId: string): Promise<{ success: boolean }> {
+  try {
+    const response = await apiClient.delete(`/plaid/accounts/${accountId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error unlinking Plaid account:', error);
+    throw error;
+  }
+}
