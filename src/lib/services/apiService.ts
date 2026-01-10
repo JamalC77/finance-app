@@ -370,4 +370,117 @@ export const quickbooksApi = {
   }
 };
 
+// AI CFO types
+export interface AICfoMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface AICfoResponse {
+  answer: string;
+  financialSnapshot: {
+    cashBalance: number;
+    runwayMonths: number;
+    mtdProfitLoss: number;
+    dataAsOf: string;
+  };
+  usage: {
+    inputTokens: number;
+    outputTokens: number;
+  };
+}
+
+export interface HiringAnalysisRequest {
+  role: string;
+  salary: number;
+  count: number;
+  startMonth?: string;
+}
+
+/**
+ * AI CFO API Service
+ */
+export const aiCfoApi = {
+  /**
+   * Ask the AI CFO a question
+   */
+  askQuestion: async (
+    question: string,
+    conversationHistory: AICfoMessage[] = [],
+    token?: string
+  ): Promise<ApiResponse<AICfoResponse>> => {
+    try {
+      console.log("🤖 [AI CFO] Sending question to AI CFO");
+      const response = await apiClient.post<ApiResponse<AICfoResponse>>(
+        "/api/ai-cfo/ask",
+        { question, conversationHistory },
+        token
+      );
+      console.log("✅ [AI CFO] Response received");
+      return response;
+    } catch (error: unknown) {
+      console.error("❌ [AI CFO] Error asking question:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get weekly executive summary
+   */
+  getWeeklySummary: async (token?: string): Promise<ApiResponse<AICfoResponse>> => {
+    try {
+      console.log("🤖 [AI CFO] Requesting weekly summary");
+      const response = await apiClient.get<ApiResponse<AICfoResponse>>(
+        "/api/ai-cfo/weekly-summary",
+        token
+      );
+      console.log("✅ [AI CFO] Weekly summary received");
+      return response;
+    } catch (error: unknown) {
+      console.error("❌ [AI CFO] Error getting weekly summary:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Analyze a hiring decision
+   */
+  analyzeHire: async (
+    params: HiringAnalysisRequest,
+    token?: string
+  ): Promise<ApiResponse<AICfoResponse>> => {
+    try {
+      console.log("🤖 [AI CFO] Analyzing hiring decision");
+      const response = await apiClient.post<ApiResponse<AICfoResponse>>(
+        "/api/ai-cfo/analyze-hire",
+        params,
+        token
+      );
+      console.log("✅ [AI CFO] Hiring analysis received");
+      return response;
+    } catch (error: unknown) {
+      console.error("❌ [AI CFO] Error analyzing hire:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get collection priorities
+   */
+  getCollectionPriorities: async (token?: string): Promise<ApiResponse<AICfoResponse>> => {
+    try {
+      console.log("🤖 [AI CFO] Requesting collection priorities");
+      const response = await apiClient.get<ApiResponse<AICfoResponse>>(
+        "/api/ai-cfo/collection-priorities",
+        token
+      );
+      console.log("✅ [AI CFO] Collection priorities received");
+      return response;
+    } catch (error: unknown) {
+      console.error("❌ [AI CFO] Error getting collection priorities:", error);
+      throw error;
+    }
+  },
+};
+
 export default apiService; 

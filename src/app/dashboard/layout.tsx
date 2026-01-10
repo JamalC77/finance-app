@@ -3,12 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  FileText, 
+import {
+  LayoutDashboard,
+  FileText,
   Receipt,
-  BarChart3, 
-  Users, 
+  BarChart3,
+  Users,
   CreditCard,
   Landmark,
   Settings,
@@ -16,7 +16,8 @@ import {
   LogOut,
   Menu,
   X,
-  User
+  User,
+  Bot
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -38,6 +39,11 @@ const navItems = [
     href: '/dashboard',
     label: 'Dashboard',
     icon: <LayoutDashboard className="h-5 w-5" />,
+  },
+  {
+    href: '/dashboard/ai-cfo',
+    label: 'AI CFO',
+    icon: <Bot className="h-5 w-5" />,
   },
   {
     href: '/dashboard/invoices',
