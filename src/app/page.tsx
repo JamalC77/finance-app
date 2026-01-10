@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LeadChatWidget } from "@/components/LeadChatWidget";
 
 export default function LandingPage() {
   const calendlyUrl = "https://calendly.com/cfoline"; // Update with actual Calendly link
@@ -344,6 +345,9 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Lead Capture Chat Widget */}
+      <LeadChatWidget />
     </div>
   );
 }
