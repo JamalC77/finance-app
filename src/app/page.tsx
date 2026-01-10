@@ -1,42 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/contexts/AuthContext";
-import { ArrowRight, BarChart, DollarSign, CreditCard, TrendingUp, LineChart, Lock, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  DollarSign,
+  TrendingUp,
+  Users,
+  BarChart3,
+  CheckCircle2,
+  Building2,
+  Briefcase,
+  Target,
+  Calendar,
+  ChevronRight
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function Home() {
-  const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+export default function LandingPage() {
+  const calendlyUrl = "https://calendly.com/cfoline"; // Update with actual Calendly link
 
-  useEffect(() => {
-    // Only redirect authenticated users to dashboard
-    if (!isLoading && isAuthenticated) {
-      router.push("/dashboard");
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // If still loading auth state, show loading screen
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="feature-icon">
-              <DollarSign className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold mb-4">CFO Line</h1>
-          <p className="text-lg text-muted-foreground mb-8">Loading application...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is not authenticated, show landing page
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navigation */}
@@ -49,171 +32,264 @@ export default function Home() {
             <span className="text-xl font-bold">CFO Line</span>
           </Link>
           <div className="flex items-center space-x-2">
-            <Link href="/pricing">
-              <Button variant="ghost" className="hidden sm:inline-flex">Pricing</Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button variant="ghost">Log In</Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button className="btn-shine">Sign Up</Button>
-            </Link>
+            <a href={calendlyUrl} target="_blank" rel="noopener noreferrer">
+              <Button className="btn-shine">
+                <Calendar className="mr-2 h-4 w-4" />
+                Book a Call
+              </Button>
+            </a>
           </div>
         </div>
       </header>
 
       <main className="flex-grow">
         {/* Hero Section */}
-        <section className="relative py-24 md:py-32 px-4 overflow-hidden">
+        <section className="relative py-20 md:py-28 px-4 overflow-hidden">
           {/* Background effects */}
           <div className="absolute inset-0 gradient-hero"></div>
           <div className="absolute inset-0 pattern-grid"></div>
-          
+
           {/* Floating shapes */}
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-violet-500/5 rounded-full blur-3xl"></div>
-          
-          <div className="container mx-auto max-w-6xl text-center relative z-10">
+
+          <div className="container mx-auto max-w-5xl text-center relative z-10">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
-              <Zap className="h-4 w-4" />
-              <span>Powered by QuickBooks Integration</span>
+              <Building2 className="h-4 w-4" />
+              <span>For businesses doing $1M–$50M in revenue</span>
             </div>
-            
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Transform Your Financial Data Into{" "}
-              <span className="gradient-text">Powerful Insights</span>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
+              CFO-Level Financial Leadership{" "}
+              <span className="gradient-text">Without the Full-Time Cost</span>
             </h1>
-            
+
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed">
-              CFO Line connects seamlessly with QuickBooks to process your financial data and deliver 
-              deep business analytics that help you make smarter decisions and drive growth.
+              You&apos;ve outgrown QuickBooks and DIY bookkeeping. But you don&apos;t need a $200K CFO sitting in a seat 40 hours a week. You need expertise on demand—clean financials, cash flow visibility, and strategic guidance when it matters.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/auth/register">
+              <a href={calendlyUrl} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="text-lg px-8 h-14 btn-shine glow-primary">
-                  Get Started Free
+                  Schedule a Discovery Call
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button variant="outline" size="lg" className="text-lg px-8 h-14">
-                  View Pricing
-                </Button>
-              </Link>
+              </a>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-6">
+              No commitment. 30-minute call to see if we&apos;re a fit.
+            </p>
+          </div>
+        </section>
+
+        {/* Problem Section */}
+        <section className="py-20 px-4 relative">
+          <div className="absolute inset-0 bg-muted/30"></div>
+          <div className="container mx-auto max-w-5xl relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Stuck in the Gap?
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+                Most growing businesses hit a wall between $1M and $50M in revenue. The financial setup that got you here won&apos;t get you where you&apos;re going.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+              <Card className="border-destructive/20 bg-destructive/5">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <span className="text-destructive">✗</span> What You&apos;re Dealing With
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-muted-foreground">Financials you don&apos;t fully trust</p>
+                  <p className="text-muted-foreground">No clear picture of your cash position</p>
+                  <p className="text-muted-foreground">Scrambling when the bank or investors ask questions</p>
+                  <p className="text-muted-foreground">Making hiring and expansion decisions on gut feel</p>
+                  <p className="text-muted-foreground">Paying a full-time CFO salary you can&apos;t justify</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" /> What You Actually Need
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-muted-foreground">Clean, accurate financials every month</p>
+                  <p className="text-muted-foreground">Real-time cash flow visibility</p>
+                  <p className="text-muted-foreground">Someone who can talk to your bank and tax preparer</p>
+                  <p className="text-muted-foreground">Strategic guidance on when to hire, expand, or pull back</p>
+                  <p className="text-muted-foreground">CFO expertise without the full-time overhead</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-24 px-4 relative">
-          <div className="absolute inset-0 bg-muted/30"></div>
-          <div className="container mx-auto max-w-6xl relative z-10">
+        {/* Services Section */}
+        <section className="py-20 px-4 relative">
+          <div className="container mx-auto max-w-5xl relative z-10">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Everything You Need for Financial Clarity
+                Right-Sized Financial Leadership
               </h2>
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Powerful features designed to give you complete visibility into your business finances.
+                Get exactly the level of support you need—from reliable bookkeeping to strategic CFO guidance—and scale up as you grow.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="card-hover border-gradient bg-card">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="card-hover border-gradient bg-card relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
                 <CardHeader>
                   <div className="feature-icon mb-4">
-                    <DollarSign className="h-6 w-6 text-primary" />
+                    <Briefcase className="h-6 w-6 text-emerald-500" />
                   </div>
-                  <CardTitle className="text-xl">QuickBooks Integration</CardTitle>
-                  <CardDescription className="text-base">Seamless connection with your QuickBooks account.</CardDescription>
+                  <CardTitle className="text-xl">Staff Accountant</CardTitle>
+                  <CardDescription className="text-base">Foundation</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Automatically sync your financial data from QuickBooks and keep everything up-to-date 
-                    in real-time for accurate business intelligence.
-                  </p>
+                <CardContent className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Monthly bookkeeping & reconciliation</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Clean, organized financials</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Basic financial reports</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Tax-preparer ready files</span>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="card-hover border-gradient bg-card">
+              <Card className="card-hover border-gradient bg-card relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-amber-500"></div>
                 <CardHeader>
                   <div className="feature-icon mb-4">
-                    <BarChart className="h-6 w-6 text-primary" />
+                    <BarChart3 className="h-6 w-6 text-amber-500" />
                   </div>
-                  <CardTitle className="text-xl">Advanced Analytics</CardTitle>
-                  <CardDescription className="text-base">Transform raw data into actionable insights.</CardDescription>
+                  <CardTitle className="text-xl">Controller</CardTitle>
+                  <CardDescription className="text-base">Visibility</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Our algorithms analyze your financial data to uncover trends, 
-                    opportunities, and potential issues before they impact your business.
-                  </p>
+                <CardContent className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Everything in Staff Accountant</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Cash flow forecasting</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Budget vs. actual analysis</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Monthly financial review calls</span>
+                  </div>
                 </CardContent>
               </Card>
 
-              <Card className="card-hover border-gradient bg-card">
+              <Card className="card-hover border-gradient bg-card relative overflow-hidden ring-2 ring-primary">
+                <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+                <div className="absolute top-4 right-4 px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded">
+                  Most Popular
+                </div>
                 <CardHeader>
                   <div className="feature-icon mb-4">
                     <TrendingUp className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-xl">Cash Flow Forecasting</CardTitle>
-                  <CardDescription className="text-base">See your financial future with clarity.</CardDescription>
+                  <CardTitle className="text-xl">CFO</CardTitle>
+                  <CardDescription className="text-base">Strategy</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Predict your cash position months ahead with intelligent forecasting that 
-                    helps you plan for growth and avoid cash crunches.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="card-hover border-gradient bg-card">
-                <CardHeader>
-                  <div className="feature-icon mb-4">
-                    <LineChart className="h-6 w-6 text-primary" />
+                <CardContent className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Everything in Controller</span>
                   </div>
-                  <CardTitle className="text-xl">Strategic Reports</CardTitle>
-                  <CardDescription className="text-base">Make data-driven decisions with confidence.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Generate clear, digestible reports that help you understand your financial 
-                    position and make strategic decisions to grow your business.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="card-hover border-gradient bg-card">
-                <CardHeader>
-                  <div className="feature-icon mb-4">
-                    <CreditCard className="h-6 w-6 text-primary" />
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Strategic planning & scenario modeling</span>
                   </div>
-                  <CardTitle className="text-xl">Expense Tracking</CardTitle>
-                  <CardDescription className="text-base">Know exactly where your money goes.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Categorize and track expenses automatically, identify spending patterns, 
-                    and find opportunities to reduce costs and improve margins.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="card-hover border-gradient bg-card">
-                <CardHeader>
-                  <div className="feature-icon mb-4">
-                    <Lock className="h-6 w-6 text-primary" />
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Bank & investor communications</span>
                   </div>
-                  <CardTitle className="text-xl">Secure Data Handling</CardTitle>
-                  <CardDescription className="text-base">Your data stays protected.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Your financial data is encrypted and securely handled. We never share your 
-                    information with third parties without your consent.
-                  </p>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                    <span className="text-muted-foreground">Hiring & expansion guidance</span>
+                  </div>
                 </CardContent>
               </Card>
+            </div>
+
+            <div className="text-center mt-12">
+              <a href={calendlyUrl} target="_blank" rel="noopener noreferrer">
+                <Button size="lg" className="text-lg px-8 h-14">
+                  Find Your Right Fit
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Who We Serve */}
+        <section className="py-20 px-4 relative">
+          <div className="absolute inset-0 bg-muted/30"></div>
+          <div className="container mx-auto max-w-5xl relative z-10">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Built for Growing Businesses
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                We work with companies doing $1M–$50M in annual revenue who need financial leadership without the full-time cost.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="flex flex-col items-center text-center p-6 rounded-xl bg-card border">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Building2 className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Service Businesses</h3>
+                <p className="text-sm text-muted-foreground">Agencies, consultancies, professional services</p>
+              </div>
+
+              <div className="flex flex-col items-center text-center p-6 rounded-xl bg-card border">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Users className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Contractors</h3>
+                <p className="text-sm text-muted-foreground">Construction, trades, specialty contractors</p>
+              </div>
+
+              <div className="flex flex-col items-center text-center p-6 rounded-xl bg-card border">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Target className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">E-commerce</h3>
+                <p className="text-sm text-muted-foreground">Online retailers, DTC brands, marketplaces</p>
+              </div>
+
+              <div className="flex flex-col items-center text-center p-6 rounded-xl bg-card border">
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <Briefcase className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-semibold mb-2">Growing SMBs</h3>
+                <p className="text-sm text-muted-foreground">Any business ready to scale with confidence</p>
+              </div>
             </div>
           </div>
         </section>
@@ -223,28 +299,23 @@ export default function Home() {
           <div className="absolute inset-0 gradient-hero"></div>
           <div className="absolute inset-0 pattern-grid"></div>
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-3xl"></div>
-          
+
           <div className="container mx-auto max-w-3xl text-center relative z-10">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Unlock the Full Potential of Your Financial Data?
+              Ready for Financial Clarity?
             </h2>
             <p className="text-xl text-muted-foreground mb-10">
-              Start using CFO Line to gain deeper insights, identify growth opportunities, 
-              and make smarter financial decisions.
+              Let&apos;s have a conversation. In 30 minutes, we&apos;ll understand your situation and tell you honestly if we can help.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/auth/register">
-                <Button size="lg" className="text-lg px-8 h-14 btn-shine">
-                  Create Your Free Account
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button size="lg" variant="outline" className="text-lg px-8 h-14">
-                  View Pricing Options
-                </Button>
-              </Link>
-            </div>
+            <a href={calendlyUrl} target="_blank" rel="noopener noreferrer">
+              <Button size="lg" className="text-lg px-8 h-14 btn-shine">
+                <Calendar className="mr-2 h-5 w-5" />
+                Book Your Discovery Call
+              </Button>
+            </a>
+            <p className="text-sm text-muted-foreground mt-6">
+              No obligation. Just a real conversation about your business.
+            </p>
           </div>
         </section>
       </main>
@@ -260,17 +331,11 @@ export default function Home() {
               <span className="font-bold">CFO Line</span>
             </Link>
             <div className="flex flex-wrap justify-center gap-6">
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
               <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Service
-              </Link>
               <Link href="/eula" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                EULA
+                Terms
               </Link>
             </div>
             <div className="text-sm text-muted-foreground">
