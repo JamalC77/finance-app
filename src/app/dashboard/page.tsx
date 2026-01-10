@@ -83,13 +83,6 @@ type BusinessInsight = {
   relatedMetric?: string; // e.g., "runwayMonths", "dso"
 };
 
-type IndustryBenchmark = {
-  metric: string; // e.g., "netProfitMargin", "dso"
-  average: number;
-  percentile_25?: number;
-  percentile_75?: number;
-};
-
 type RecentActivity = {
   id: string;
   type: string; // e.g., "INVOICE_PAID", "BILL_CREATED" etc. (refine based on helper)
@@ -135,7 +128,6 @@ type DashboardData = {
   cashFlowHistory: CashFlowHistoryItem[]; // 12-24 months
   cashFlowForecast: CashFlowForecastItem[]; // 3-12 months
   businessInsights: BusinessInsight[];
-  industryBenchmarks?: IndustryBenchmark[];
   recentActivity: RecentActivity[];
   topCustomers: CustomerItem[];
   topExpenseCategories: CategoryItem[];
@@ -146,21 +138,44 @@ type DashboardData = {
 };
 
 // Scenario Types
+type ScenarioType = 'simple' | 'loseCustomer' | 'newHire' | 'oneTimeExpense' | 'payoffDebt';
+
 type Scenario = {
   id: string;
   name: string;
-  // Define parameters based on what API accepts
+  // Basic multipliers
   revenueMultiplier?: number;
   expenseMultiplier?: number;
   newRecurringRevenue?: number;
   newRecurringExpense?: number;
-  // ... other potential scenario inputs
+  // Lose customer scenario
+  loseCustomer?: {
+    revenueAmount: number;
+    effectiveMonth?: number;
+  };
+  // New hire scenario
+  newHire?: {
+    role: string;
+    monthlySalary: number;
+    count: number;
+    startMonth?: number;
+  };
+  // One-time expense scenario
+  oneTimeExpense?: {
+    amount: number;
+    month: number;
+    description?: string;
+  };
+  // Pay off debt scenario
+  payoffDebt?: {
+    amount: number;
+    month?: number;
+  };
 };
 
 type ScenarioResult = {
     scenarioName: string;
     forecast: CashFlowForecastItem[];
-    // Other key result metrics if API returns them
 }
 
 // --------------------------------------------------------------------------------
@@ -199,6 +214,34 @@ const formatDate = (date?: string | Date): string => {
   }
 };
 
+// Custom Recharts Tooltip that matches our theme
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: string;
+  formatter?: (value: number, name: string) => [string, string];
+}
+
+const CustomChartTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label, formatter }) => {
+  if (!active || !payload || payload.length === 0) return null;
+  
+  return (
+    <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg">
+      {label && <p className="text-sm font-medium text-foreground mb-1">{label}</p>}
+      {payload.map((entry, index) => {
+        const [formattedValue, formattedName] = formatter 
+          ? formatter(entry.value, entry.name) 
+          : [formatCurrency(entry.value), entry.name];
+        return (
+          <p key={index} className="text-sm" style={{ color: entry.color }}>
+            {formattedName}: {formattedValue}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 // Map insight type to icon and color
 const getInsightPresentation = (type: BusinessInsight["type"]) => {
   switch (type) {
@@ -232,10 +275,10 @@ const MetricDisplay: React.FC<{ label: string; value: string; tooltip?: string; 
 
     if (isLoading) {
        return (
-           <Card>
+           <Card className="card-hover">
                 <CardHeader className="flex flex-row items-center justify-between py-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
-                    {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+                    {Icon && <div className="feature-icon"><Icon className="h-4 w-4" /></div>}
                 </CardHeader>
                 <CardContent className="pt-0">
                     <div className="h-7 w-20 bg-muted animate-pulse rounded-md mb-2"></div>
@@ -259,7 +302,7 @@ const MetricDisplay: React.FC<{ label: string; value: string; tooltip?: string; 
     );
 
     return (
-      <Card>
+      <Card className="card-hover">
         <CardHeader className="flex flex-row items-center justify-between py-2">
              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {tooltip ? (
@@ -271,7 +314,7 @@ const MetricDisplay: React.FC<{ label: string; value: string; tooltip?: string; 
                     </TooltipProvider>
                 ) : label}
             </CardTitle>
-           {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+           {Icon && <div className="feature-icon"><Icon className="h-4 w-4" /></div>}
         </CardHeader>
         <CardContent className="pt-0">{content}</CardContent>
       </Card>
@@ -292,13 +335,16 @@ const FinancialRatiosCard: React.FC<{ data: DashboardData; isLoading?: boolean }
    }
 
     if (isLoading) {
-        return <Card><CardHeader><CardTitle>Key Ratios</CardTitle></CardHeader><CardContent className="space-y-2"><div className="h-5 w-full bg-muted animate-pulse rounded"></div><div className="h-5 w-full bg-muted animate-pulse rounded"></div><div className="h-5 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
+        return <Card className="card-hover"><CardHeader><CardTitle>Key Ratios</CardTitle></CardHeader><CardContent className="space-y-2"><div className="h-5 w-full bg-muted animate-pulse rounded"></div><div className="h-5 w-full bg-muted animate-pulse rounded"></div><div className="h-5 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
     }
 
    return (
-        <Card>
+        <Card className="card-hover">
             <CardHeader>
-                <CardTitle className="text-lg">Key Financial Ratios</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="feature-icon"><Gauge className="h-4 w-4" /></div>
+                    Key Financial Ratios
+                </CardTitle>
                 <CardDescription>Health indicators at a glance</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -337,20 +383,23 @@ const AgingSummaryCard: React.FC<{ ar: AgingBucket; ap: AgingBucket; isLoading?:
     const overdueAR = totalAR - (ar?.["0-30"] ?? 0);
 
      if (isLoading) {
-        return <Card><CardHeader><CardTitle>AR / AP Aging</CardTitle></CardHeader><CardContent><div className="h-40 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
+        return <Card className="card-hover"><CardHeader><CardTitle>AR / AP Aging</CardTitle></CardHeader><CardContent><div className="h-40 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
     }
 
     return (
-        <Card>
+        <Card className="card-hover">
              <CardHeader>
-                <CardTitle className="text-lg">AR / AP Aging</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="feature-icon"><BarChart3 className="h-4 w-4" /></div>
+                    AR / AP Aging
+                </CardTitle>
                 <CardDescription>Receivables vs. Payables by age</CardDescription>
             </CardHeader>
             <CardContent>
                  <div className="mb-3 space-y-1 text-sm">
                     <div className="flex justify-between"><span>Total Receivables:</span> <span className="font-medium">{formatCurrency(totalAR)}</span></div>
                     <div className="flex justify-between"><span>Total Payables:</span> <span className="font-medium">{formatCurrency(totalAP)}</span></div>
-                     <div className="flex justify-between"><span className="text-red-500">Overdue AR (>30d):</span> <span className="font-medium text-red-500">{formatCurrency(overdueAR)}</span></div>
+                     <div className="flex justify-between"><span className="text-red-500">Overdue AR (&gt;30d):</span> <span className="font-medium text-red-500">{formatCurrency(overdueAR)}</span></div>
                  </div>
                  <div className="h-[150px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -358,7 +407,9 @@ const AgingSummaryCard: React.FC<{ ar: AgingBucket; ap: AgingBucket; isLoading?:
                              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                             <XAxis type="number" fontSize={10} tickFormatter={(val) => formatCurrency(val, true)} />
                             <YAxis dataKey="name" type="category" fontSize={10} />
-                            <RechartsTooltip formatter={(value: number, name: string) => [formatCurrency(value), name === 'AR' ? 'Receivable' : 'Payable']} />
+                            <RechartsTooltip 
+                                content={<CustomChartTooltip formatter={(value: number, name: string) => [formatCurrency(value), name]} />}
+                            />
                             <Legend wrapperStyle={{ fontSize: '10px' }}/>
                             <RechartsBar dataKey="AR" name="Receivable" fill="#3b82f6" barSize={15} />
                              <RechartsBar dataKey="AP" name="Payable" fill="#f43f5e" barSize={15} />
@@ -375,10 +426,10 @@ const RunwayCard: React.FC<{ months?: number | null; isLoading?: boolean }> = ({
     let text = "N/A";
     let description = "Runway not calculated";
     let color = "text-muted-foreground";
-    let Icon = Clock;
+    let StatusIcon = Clock;
 
     if (isLoading) {
-        return <Card><CardHeader><CardTitle>Cash Runway</CardTitle></CardHeader><CardContent><div className="h-10 w-24 bg-muted animate-pulse rounded"></div></CardContent></Card>;
+        return <Card className="card-hover border-gradient"><CardHeader><CardTitle>Cash Runway</CardTitle></CardHeader><CardContent><div className="h-10 w-24 bg-muted animate-pulse rounded"></div></CardContent></Card>;
     }
 
     if (months === null || months === undefined) {
@@ -387,19 +438,24 @@ const RunwayCard: React.FC<{ months?: number | null; isLoading?: boolean }> = ({
         text = "Profitable";
         description = "Currently cash flow positive";
         color = "text-green-500";
-        Icon = TrendingUp;
+        StatusIcon = TrendingUp;
     } else {
         text = `${months.toFixed(1)} months`;
         description = `Estimated runway at current burn rate`;
-        if (months < 3) { color = "text-red-500"; Icon = AlertTriangle; }
-        else if (months < 6) { color = "text-amber-500"; Icon = Clock; }
-        else { color = "text-green-500"; Icon = CheckCircle2; }
+        if (months < 3) { color = "text-red-500"; StatusIcon = AlertTriangle; }
+        else if (months < 6) { color = "text-amber-500"; StatusIcon = Clock; }
+        else { color = "text-green-500"; StatusIcon = CheckCircle2; }
     }
 
     return (
-         <Card>
+         <Card className="card-hover border-gradient">
             <CardHeader className="pb-2">
-                 <CardTitle className="text-lg flex items-center"><Icon className={`mr-2 h-5 w-5 ${color}`} />Cash Runway</CardTitle>
+                 <CardTitle className="text-lg flex items-center gap-2">
+                    <div className={`p-2 rounded-lg ${color === 'text-green-500' ? 'bg-green-100 dark:bg-green-900/30' : color === 'text-amber-500' ? 'bg-amber-100 dark:bg-amber-900/30' : color === 'text-red-500' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-muted'}`}>
+                        <StatusIcon className={`h-5 w-5 ${color}`} />
+                    </div>
+                    Cash Runway
+                 </CardTitle>
             </CardHeader>
             <CardContent>
                  <div className={`text-3xl font-bold ${color}`}>{text}</div>
@@ -412,19 +468,22 @@ const RunwayCard: React.FC<{ months?: number | null; isLoading?: boolean }> = ({
 // Component for Trend Chart (12/24 months)
 const TrendChart: React.FC<{ data: CashFlowHistoryItem[]; isLoading?: boolean }> = ({ data, isLoading }) => {
     if (isLoading) {
-       return <Card><CardHeader><CardTitle>Financial Trends</CardTitle></CardHeader><CardContent><div className="h-80 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
+       return <Card className="card-hover"><CardHeader><CardTitle>Financial Trends</CardTitle></CardHeader><CardContent><div className="h-80 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
     }
      if (!data || data.length === 0) {
-         return <Card><CardHeader><CardTitle>Financial Trends</CardTitle></CardHeader><CardContent><p className="text-center text-muted-foreground py-10">No historical data available.</p></CardContent></Card>;
+         return <Card className="card-hover"><CardHeader><CardTitle>Financial Trends</CardTitle></CardHeader><CardContent><p className="text-center text-muted-foreground py-10">No historical data available.</p></CardContent></Card>;
      }
 
      // Show last 12 months if more data is available
     const chartData = data.slice(-12);
 
     return (
-         <Card>
+         <Card className="card-hover">
             <CardHeader>
-                <CardTitle className="text-lg">Financial Trends (Last 12 Months)</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="feature-icon"><LineChart className="h-4 w-4" /></div>
+                    Financial Trends (Last 12 Months)
+                </CardTitle>
                 <CardDescription>Income, Expenses, and Profit over time</CardDescription>
             </CardHeader>
             <CardContent>
@@ -434,7 +493,7 @@ const TrendChart: React.FC<{ data: CashFlowHistoryItem[]; isLoading?: boolean }>
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis dataKey="month" stroke="#888888" fontSize={10} angle={-30} textAnchor="end" height={40} interval={0}/>
                             <YAxis stroke="#888888" fontSize={10} tickFormatter={(value) => formatCurrency(value, true)} />
-                            <RechartsTooltip formatter={(value: number) => formatCurrency(value)} />
+                            <RechartsTooltip content={<CustomChartTooltip />} />
                             <Legend wrapperStyle={{ fontSize: '12px' }} />
                              <RechartsBar dataKey="income" name="Income" fill="#4f46e5" radius={[4, 4, 0, 0]} />
                              <RechartsBar dataKey="expenses" name="Expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} />
@@ -450,16 +509,19 @@ const TrendChart: React.FC<{ data: CashFlowHistoryItem[]; isLoading?: boolean }>
 // Component for Forecast Chart
 const ForecastChart: React.FC<{ data: CashFlowForecastItem[]; isLoading?: boolean }> = ({ data, isLoading }) => {
      if (isLoading) {
-       return <Card><CardHeader><CardTitle>Cash Flow Forecast</CardTitle></CardHeader><CardContent><div className="h-80 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
+       return <Card className="card-hover"><CardHeader><CardTitle>Cash Flow Forecast</CardTitle></CardHeader><CardContent><div className="h-80 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
     }
      if (!data || data.length === 0) {
-         return <Card><CardHeader><CardTitle>Cash Flow Forecast</CardTitle></CardHeader><CardContent><p className="text-center text-muted-foreground py-10">No forecast data available.</p></CardContent></Card>;
+         return <Card className="card-hover"><CardHeader><CardTitle>Cash Flow Forecast</CardTitle></CardHeader><CardContent><p className="text-center text-muted-foreground py-10">No forecast data available.</p></CardContent></Card>;
      }
 
     return (
-        <Card>
+        <Card className="card-hover">
             <CardHeader>
-                <CardTitle className="text-lg">Cash Flow Forecast ({data.length} Months)</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="feature-icon"><AreaChartIcon className="h-4 w-4" /></div>
+                    Cash Flow Forecast ({data.length} Months)
+                </CardTitle>
                 <CardDescription>Projected financial position</CardDescription>
             </CardHeader>
              <CardContent>
@@ -475,7 +537,7 @@ const ForecastChart: React.FC<{ data: CashFlowForecastItem[]; isLoading?: boolea
                             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis dataKey="month" stroke="#888888" fontSize={10} />
                             <YAxis stroke="#888888" fontSize={10} tickFormatter={(value) => formatCurrency(value, true)} />
-                            <RechartsTooltip formatter={(value: number) => formatCurrency(value)} />
+                            <RechartsTooltip content={<CustomChartTooltip />} />
                             <Legend wrapperStyle={{ fontSize: '12px' }}/>
                             {/* Optional: Show Income/Expense areas */}
                             {/* <Area type="monotone" dataKey="projected_income" name="Proj. Income" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.1} /> */}
@@ -495,7 +557,7 @@ const InsightsFeed: React.FC<{ insights: BusinessInsight[]; isLoading?: boolean 
      const [showAll, setShowAll] = useState(false);
 
      if (isLoading) {
-         return <Card><CardHeader><CardTitle>Insights & Alerts</CardTitle></CardHeader><CardContent className="space-y-2"><div className="h-8 w-full bg-muted animate-pulse rounded"></div><div className="h-8 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
+         return <Card className="card-hover border-gradient"><CardHeader><CardTitle>Insights & Alerts</CardTitle></CardHeader><CardContent className="space-y-2"><div className="h-8 w-full bg-muted animate-pulse rounded"></div><div className="h-8 w-full bg-muted animate-pulse rounded"></div></CardContent></Card>;
      }
 
     const sortedInsights = [...insights].sort((a, b) => b.priority - a.priority); // Highest priority first
@@ -503,9 +565,12 @@ const InsightsFeed: React.FC<{ insights: BusinessInsight[]; isLoading?: boolean 
 
     if (!insights || insights.length === 0) {
         return (
-            <Card>
+            <Card className="card-hover border-gradient">
                 <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><BrainCircuit className="mr-2 h-5 w-5 text-primary"/>Insights & Alerts</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <div className="feature-icon"><BrainCircuit className="h-4 w-4" /></div>
+                        Insights & Alerts
+                    </CardTitle>
                 </CardHeader>
                 <CardContent><p className="text-sm text-muted-foreground">No specific insights generated at this time.</p></CardContent>
             </Card>
@@ -513,9 +578,12 @@ const InsightsFeed: React.FC<{ insights: BusinessInsight[]; isLoading?: boolean 
     }
 
     return (
-        <Card>
+        <Card className="card-hover border-gradient">
             <CardHeader>
-                <CardTitle className="text-lg flex items-center"><BrainCircuit className="mr-2 h-5 w-5 text-primary"/>Insights & Alerts</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="feature-icon"><BrainCircuit className="h-4 w-4" /></div>
+                    Insights & Alerts
+                </CardTitle>
                 <CardDescription>Actionable intelligence based on your data</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -551,58 +619,260 @@ const InsightsFeed: React.FC<{ insights: BusinessInsight[]; isLoading?: boolean 
     );
 };
 
-// --- Scenario Planner (Modal remains similar, but interaction changes) ---
+// --- Enhanced Scenario Planner with all scenario types ---
 function ScenarioPlanner({
   onClose,
-  onRunScenario, // Changed from onAddScenario
+  onRunScenario,
 }: {
   onClose: () => void;
-  onRunScenario: (scenarioParams: Omit<Scenario, 'id'>) => void; // Pass params back for API call
+  onRunScenario: (scenarioParams: Omit<Scenario, 'id'>) => void;
 }) {
   const [scenarioName, setScenarioName] = useState("New Scenario");
+  const [scenarioType, setScenarioType] = useState<ScenarioType>('simple');
+
+  // Simple scenario state
   const [revenueMultiplier, setRevenueMultiplier] = useState(1.0);
   const [expenseMultiplier, setExpenseMultiplier] = useState(1.0);
-  // Add more state for other potential scenario parameters
+
+  // Lose customer state
+  const [lostRevenue, setLostRevenue] = useState(0);
+
+  // New hire state
+  const [hireRole, setHireRole] = useState('');
+  const [hireSalary, setHireSalary] = useState(0);
+  const [hireCount, setHireCount] = useState(1);
+  const [hireStartMonth, setHireStartMonth] = useState(0);
+
+  // One-time expense state
+  const [expenseAmount, setExpenseAmount] = useState(0);
+  const [expenseMonth, setExpenseMonth] = useState(0);
+  const [expenseDescription, setExpenseDescription] = useState('');
+
+  // Payoff debt state
+  const [debtAmount, setDebtAmount] = useState(0);
 
   const handleRun = () => {
-    const params: Omit<Scenario, 'id'> = {
-      name: scenarioName,
-      revenueMultiplier,
-      expenseMultiplier,
-      // Add other params
-    };
-    onRunScenario(params); // Trigger API call in parent
+    const params: Omit<Scenario, 'id'> = { name: scenarioName };
+
+    switch (scenarioType) {
+      case 'simple':
+        params.revenueMultiplier = revenueMultiplier;
+        params.expenseMultiplier = expenseMultiplier;
+        break;
+      case 'loseCustomer':
+        params.loseCustomer = { revenueAmount: lostRevenue };
+        break;
+      case 'newHire':
+        params.newHire = {
+          role: hireRole,
+          monthlySalary: hireSalary,
+          count: hireCount,
+          startMonth: hireStartMonth
+        };
+        break;
+      case 'oneTimeExpense':
+        params.oneTimeExpense = {
+          amount: expenseAmount,
+          month: expenseMonth,
+          description: expenseDescription
+        };
+        break;
+      case 'payoffDebt':
+        params.payoffDebt = { amount: debtAmount };
+        break;
+    }
+
+    onRunScenario(params);
     onClose();
   };
 
+  const inputClass = "w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
-      <Card className="w-full max-w-md">
-         <CardHeader className="relative">
-             <Button variant="ghost" size="icon" className="absolute right-2 top-2" onClick={onClose}><X className="h-4 w-4" /></Button>
-             <CardTitle>Create Scenario Forecast</CardTitle>
-            <CardDescription>Model changes to revenue and expenses.</CardDescription>
-         </CardHeader>
-         <CardContent className="space-y-4">
-             {/* Input fields for scenario name, multipliers, etc. */}
+      <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <CardHeader className="relative">
+          <Button variant="ghost" size="icon" className="absolute right-2 top-2" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+          <CardTitle>What-If Scenario</CardTitle>
+          <CardDescription>Model changes to see how they affect your forecast</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Scenario Name */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Scenario Name</label>
+            <input
+              type="text"
+              value={scenarioName}
+              onChange={(e) => setScenarioName(e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          {/* Scenario Type Selector */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Scenario Type</label>
+            <select
+              value={scenarioType}
+              onChange={(e) => setScenarioType(e.target.value as ScenarioType)}
+              className={inputClass}
+            >
+              <option value="simple">Revenue/Expense Change</option>
+              <option value="loseCustomer">Lose a Customer</option>
+              <option value="newHire">New Hire</option>
+              <option value="oneTimeExpense">One-Time Expense</option>
+              <option value="payoffDebt">Pay Off Debt</option>
+            </select>
+          </div>
+
+          {/* Conditional Fields Based on Type */}
+          {scenarioType === 'simple' && (
+            <>
               <div className="space-y-2">
-                 <label className="text-sm font-medium">Scenario Name</label>
-                 <input type="text" value={scenarioName} onChange={(e) => setScenarioName(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"/>
-             </div>
-             <div className="space-y-2">
-                 <label className="text-sm font-medium">Revenue Multiplier (e.g., 1.1 for +10%)</label>
-                 <input type="number" step="0.05" min="0" value={revenueMultiplier} onChange={(e) => setRevenueMultiplier(parseFloat(e.target.value) || 1.0)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"/>
-             </div>
-             <div className="space-y-2">
-                 <label className="text-sm font-medium">Expense Multiplier (e.g., 0.9 for -10%)</label>
-                 <input type="number" step="0.05" min="0" value={expenseMultiplier} onChange={(e) => setExpenseMultiplier(parseFloat(e.target.value) || 1.0)} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"/>
-             </div>
-             {/* Add more input fields as needed */}
-         </CardContent>
-         <CardFooter className="flex justify-end space-x-2">
-             <Button variant="outline" onClick={onClose}>Cancel</Button>
-             <Button onClick={handleRun}>Run Scenario Forecast</Button>
-         </CardFooter>
+                <label className="text-sm font-medium">Revenue Change</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  value={revenueMultiplier}
+                  onChange={(e) => setRevenueMultiplier(parseFloat(e.target.value) || 1.0)}
+                  className={inputClass}
+                />
+                <p className="text-xs text-muted-foreground">1.1 = +10% revenue, 0.9 = -10% revenue</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Expense Change</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  value={expenseMultiplier}
+                  onChange={(e) => setExpenseMultiplier(parseFloat(e.target.value) || 1.0)}
+                  className={inputClass}
+                />
+                <p className="text-xs text-muted-foreground">1.1 = +10% expenses, 0.9 = -10% expenses</p>
+              </div>
+            </>
+          )}
+
+          {scenarioType === 'loseCustomer' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Monthly Revenue Lost ($)</label>
+              <input
+                type="number"
+                min="0"
+                value={lostRevenue}
+                onChange={(e) => setLostRevenue(parseFloat(e.target.value) || 0)}
+                className={inputClass}
+              />
+              <p className="text-xs text-muted-foreground">Enter the monthly recurring revenue you would lose</p>
+            </div>
+          )}
+
+          {scenarioType === 'newHire' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Role/Title</label>
+                <input
+                  type="text"
+                  value={hireRole}
+                  onChange={(e) => setHireRole(e.target.value)}
+                  placeholder="e.g., Software Engineer"
+                  className={inputClass}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Monthly Salary ($)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={hireSalary}
+                    onChange={(e) => setHireSalary(parseFloat(e.target.value) || 0)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Number of Hires</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={hireCount}
+                    onChange={(e) => setHireCount(parseInt(e.target.value) || 1)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Start Month (0 = next month)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="11"
+                  value={hireStartMonth}
+                  onChange={(e) => setHireStartMonth(parseInt(e.target.value) || 0)}
+                  className={inputClass}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Total cost includes ~30% for benefits/taxes</p>
+            </>
+          )}
+
+          {scenarioType === 'oneTimeExpense' && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Expense Amount ($)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(parseFloat(e.target.value) || 0)}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Month (0 = next month)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="11"
+                  value={expenseMonth}
+                  onChange={(e) => setExpenseMonth(parseInt(e.target.value) || 0)}
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description (optional)</label>
+                <input
+                  type="text"
+                  value={expenseDescription}
+                  onChange={(e) => setExpenseDescription(e.target.value)}
+                  placeholder="e.g., New equipment purchase"
+                  className={inputClass}
+                />
+              </div>
+            </>
+          )}
+
+          {scenarioType === 'payoffDebt' && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Debt Amount to Pay Off ($)</label>
+              <input
+                type="number"
+                min="0"
+                value={debtAmount}
+                onChange={(e) => setDebtAmount(parseFloat(e.target.value) || 0)}
+                className={inputClass}
+              />
+              <p className="text-xs text-muted-foreground">This will be deducted from cash in the first month</p>
+            </div>
+          )}
+        </CardContent>
+        <CardFooter className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleRun}>Run Scenario</Button>
+        </CardFooter>
       </Card>
     </div>
   );
@@ -682,7 +952,7 @@ export default function DashboardPage() {
        if (!auth.token) return;
         setIsScenarioRunning(true);
        try {
-           const response = await quickbooksApi.runScenario(auth.token, scenarioParams); // Call the new scenario endpoint
+           const response = await quickbooksApi.runScenario(scenarioParams, auth.token); // Call the scenario endpoint
            if (response.success && response.data) {
                setScenarioResults(prev => [...prev, response.data as ScenarioResult]); // Add results
                toast({ title: "Scenario Forecast Generated", description: `Results for "${response.data.scenarioName}" added.`});
@@ -815,10 +1085,13 @@ export default function DashboardPage() {
                  <ForecastChart data={data.cashFlowForecast} isLoading={isLoading}/>
 
                   {/* Scenario Section */}
-                 <Card>
+                 <Card className="card-hover">
                      <CardHeader className="flex flex-row items-center justify-between">
                          <div>
-                            <CardTitle className="text-lg">Scenario Planning</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <div className="feature-icon"><Sliders className="h-4 w-4" /></div>
+                                Scenario Planning
+                            </CardTitle>
                             <CardDescription>Model hypothetical financial futures</CardDescription>
                          </div>
                           <Button variant="outline" size="sm" onClick={() => setShowScenarioPlanner(true)} disabled={isScenarioRunning}>
@@ -840,7 +1113,7 @@ export default function DashboardPage() {
                                                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                                                   <XAxis dataKey="month" stroke="#888888" fontSize={9} />
                                                   <YAxis stroke="#888888" fontSize={9} tickFormatter={(value) => formatCurrency(value, true)} domain={['auto', 'auto']} />
-                                                  <RechartsTooltip formatter={(value: number) => formatCurrency(value)} />
+                                                  <RechartsTooltip content={<CustomChartTooltip />} />
                                                   <Area type="monotone" dataKey="projected_balance" name="Proj. Balance" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
                                               </RechartsAreaChart>
                                           </ResponsiveContainer>
@@ -861,9 +1134,12 @@ export default function DashboardPage() {
                 {/* Lists: Activity, Customers, Expenses */}
                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
                       {/* Recent Activity */}
-                    <Card>
+                    <Card className="card-hover">
                         <CardHeader>
-                            <CardTitle className="text-lg">Recent Activity</CardTitle>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <div className="feature-icon"><Activity className="h-4 w-4" /></div>
+                                Recent Activity
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             {isLoading && <div className="space-y-3"><div className="h-10 w-full bg-muted animate-pulse rounded"></div><div className="h-10 w-full bg-muted animate-pulse rounded"></div></div>}
@@ -895,8 +1171,13 @@ export default function DashboardPage() {
                     </Card>
 
                     {/* Top Customers */}
-                    <Card>
-                         <CardHeader><CardTitle className="text-lg">Top Customers</CardTitle></CardHeader>
+                    <Card className="card-hover">
+                         <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <div className="feature-icon"><Users className="h-4 w-4" /></div>
+                                Top Customers
+                            </CardTitle>
+                        </CardHeader>
                         <CardContent>
                             {isLoading && <div className="space-y-3"><div className="h-10 w-full bg-muted animate-pulse rounded"></div><div className="h-10 w-full bg-muted animate-pulse rounded"></div></div>}
                             {!isLoading && data.topCustomers.length > 0 ? (
@@ -923,8 +1204,13 @@ export default function DashboardPage() {
                     </Card>
 
                     {/* Top Expense Categories */}
-                    <Card>
-                         <CardHeader><CardTitle className="text-lg">Top Expense Categories</CardTitle></CardHeader>
+                    <Card className="card-hover">
+                         <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <div className="feature-icon"><Receipt className="h-4 w-4" /></div>
+                                Top Expense Categories
+                            </CardTitle>
+                        </CardHeader>
                         <CardContent>
                              {isLoading && <div className="space-y-3"><div className="h-10 w-full bg-muted animate-pulse rounded"></div><div className="h-10 w-full bg-muted animate-pulse rounded"></div></div>}
                             {!isLoading && data.topExpenseCategories.length > 0 ? (

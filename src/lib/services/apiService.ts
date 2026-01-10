@@ -123,6 +123,52 @@ export interface QuickBooksDashboardData {
   source: string;
 }
 
+// Scenario Planning types
+export interface ScenarioParams {
+  name: string;
+  // Basic multipliers
+  revenueMultiplier?: number;
+  expenseMultiplier?: number;
+  newRecurringRevenue?: number;
+  newRecurringExpense?: number;
+  // Lose customer scenario
+  loseCustomer?: {
+    revenueAmount: number;
+    effectiveMonth?: number;
+  };
+  // New hire scenario
+  newHire?: {
+    role: string;
+    monthlySalary: number;
+    count: number;
+    startMonth?: number;
+  };
+  // One-time expense scenario
+  oneTimeExpense?: {
+    amount: number;
+    month: number;
+    description?: string;
+  };
+  // Pay off debt scenario
+  payoffDebt?: {
+    amount: number;
+    month?: number;
+  };
+}
+
+export interface CashFlowForecastItem {
+  month: string;
+  projected_income: number;
+  projected_expenses: number;
+  projected_net_change: number;
+  projected_balance: number;
+}
+
+export interface ScenarioResult {
+  scenarioName: string;
+  forecast: CashFlowForecastItem[];
+}
+
 // Define a more specific error type for axios-like errors
 interface ApiErrorResponse {
   response?: {
@@ -342,7 +388,7 @@ export const quickbooksApi = {
    */
   getDashboardData: async (token?: string): Promise<ApiResponse<QuickBooksDashboardData>> => {
     const requestKey = 'getDashboardData';
-    
+
     return quickbooksApi._dedupRequest(requestKey, async () => {
       try {
         console.log('📊 [QB API] Making request to fetch QuickBooks dashboard data');
@@ -367,6 +413,28 @@ export const quickbooksApi = {
         throw error;
       }
     });
+  },
+
+  /**
+   * Run a what-if scenario
+   */
+  runScenario: async (
+    scenarioParams: ScenarioParams,
+    token?: string
+  ): Promise<ApiResponse<ScenarioResult>> => {
+    try {
+      console.log(`📊 [QB API] Running scenario: ${scenarioParams.name}`);
+      const response = await apiClient.post<ApiResponse<ScenarioResult>>(
+        '/api/quickbooks/scenarios/run',
+        scenarioParams,
+        token
+      );
+      console.log('✅ [QB API] Scenario result received');
+      return response;
+    } catch (error: unknown) {
+      console.error('❌ [QB API] Error running scenario:', error);
+      throw error;
+    }
   }
 };
 

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CircleUser, LogOut, Menu, Settings, CreditCard, Users, FileText, BarChart, Home, DollarSign, Database, Zap } from "lucide-react";
+import { CircleUser, LogOut, Menu, Settings, CreditCard, Users, FileText, BarChart, Home, DollarSign, Database, Zap, Bot } from "lucide-react";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -47,7 +47,7 @@ export function AppNavbar() {
   const stripeCheckoutUrl = `https://buy.stripe.com/test_eVaaGP830d5g4uI144?client_reference_id=${auth.user?.id}`;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b glass">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center">
           {/* Mobile menu */}
@@ -60,41 +60,53 @@ export function AppNavbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-64">
               <SheetHeader className="border-b pb-4 mb-4">
-                <SheetTitle>CFO Line</SheetTitle>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                  </div>
+                  <SheetTitle>CFO Line</SheetTitle>
+                </div>
               </SheetHeader>
-              <nav className="flex flex-col space-y-3">
-                <Link href="/dashboard" className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors">
-                  <Home className="h-4 w-4" />
+              <nav className="flex flex-col space-y-1">
+                <Link href="/dashboard" className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors">
+                  <Home className="h-4 w-4 text-muted-foreground" />
                   Dashboard
                 </Link>
                 <Link
-                  href="/settings/integrations"
-                  className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors"
+                  href="/dashboard/ai-cfo"
+                  className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors"
                 >
-                  <Database className="h-4 w-4" />
+                  <Bot className="h-4 w-4 text-violet-500" />
+                  AI CFO
+                </Link>
+                <Link
+                  href="/settings/integrations"
+                  className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors"
+                >
+                  <Database className="h-4 w-4 text-muted-foreground" />
                   Integrations
                 </Link>
                 <Link
                   href={stripeCheckoutUrl}
-                  className="flex items-center gap-2 text-sm px-3 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md transition-colors"
+                  className="flex items-center gap-3 text-sm px-3 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg transition-colors"
                 >
                   <Zap className="h-4 w-4" />
                   Activate Plan
                 </Link>
-                <Link href="/dashboard/invoices" className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors">
-                  <FileText className="h-4 w-4" />
+                <Link href="/dashboard/invoices" className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
                   Invoices
                 </Link>
-                <Link href="/dashboard/expenses" className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors">
-                  <CreditCard className="h-4 w-4" />
+                <Link href="/dashboard/expenses" className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
                   Expenses
                 </Link>
-                <Link href="/dashboard/contacts" className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors">
-                  <Users className="h-4 w-4" />
+                <Link href="/dashboard/contacts" className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors">
+                  <Users className="h-4 w-4 text-muted-foreground" />
                   Contacts
                 </Link>
-                <Link href="/dashboard/reports" className="flex items-center gap-2 text-sm px-3 py-2 hover:bg-accent rounded-md transition-colors">
-                  <BarChart className="h-4 w-4" />
+                <Link href="/dashboard/reports" className="flex items-center gap-3 text-sm px-3 py-2.5 hover:bg-accent rounded-lg transition-colors">
+                  <BarChart className="h-4 w-4 text-muted-foreground" />
                   Reports
                 </Link>
               </nav>
@@ -102,15 +114,21 @@ export function AppNavbar() {
           </Sheet>
 
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <DollarSign className="h-6 w-6 text-primary" />
-            <span className="font-bold hidden md:inline-block">CFO Line</span>
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+              <DollarSign className="h-5 w-5 text-primary" />
+            </div>
+            <span className="font-semibold hidden md:inline-block">CFO Line</span>
           </Link>
 
           {/* Desktop navigation */}
           <nav className="ml-8 hidden md:flex items-center gap-6">
             <Link href="/dashboard" className="text-sm font-medium transition-colors hover:text-primary">
               Dashboard
+            </Link>
+            <Link href="/dashboard/ai-cfo" className="text-sm font-medium transition-colors hover:text-primary flex items-center gap-1.5">
+              <Bot className="h-4 w-4 text-violet-500" />
+              AI CFO
             </Link>
             <Link href="/settings/integrations" className="text-sm font-medium transition-colors hover:text-primary">
               Integrations

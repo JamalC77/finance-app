@@ -410,9 +410,6 @@ export default function AICfoPage() {
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Powered by Claude AI with your real-time QuickBooks data
-          </p>
         </div>
       </Card>
     </div>
