@@ -6,6 +6,12 @@ const ALLOWED_ROUTES = [
   '/',
   '/privacy-policy',
   '/eula',
+  '/insights',
+];
+
+// Route prefixes that are allowed (for dynamic routes)
+const ALLOWED_PREFIXES = [
+  '/insights/',
 ];
 
 // Static file patterns to allow
@@ -32,6 +38,11 @@ export function middleware(request: NextRequest) {
 
   // Allow the permitted routes
   if (ALLOWED_ROUTES.includes(pathname)) {
+    return NextResponse.next();
+  }
+
+  // Allow routes with permitted prefixes (dynamic routes like /insights/[slug])
+  if (ALLOWED_PREFIXES.some(prefix => pathname.startsWith(prefix))) {
     return NextResponse.next();
   }
 
