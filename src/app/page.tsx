@@ -33,6 +33,9 @@ export default function LandingPage() {
             <span className="text-xl font-bold">CFO Line</span>
           </Link>
           <div className="flex items-center space-x-2">
+            <Link href="/insights">
+              <Button variant="ghost">Insights</Button>
+            </Link>
             <a href={calendlyUrl} target="_blank" rel="noopener noreferrer">
               <Button className="btn-shine">
                 <Calendar className="mr-2 h-4 w-4" />
@@ -332,6 +335,9 @@ export default function LandingPage() {
               <span className="font-bold">CFO Line</span>
             </Link>
             <div className="flex flex-wrap justify-center gap-6">
+              <Link href="/insights" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Insights
+              </Link>
               <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Privacy Policy
               </Link>
