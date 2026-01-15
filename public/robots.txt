@@ -1,0 +1,21 @@
+# robots.txt for CFO Line
+# https://www.thecfoline.com
+
+User-agent: *
+Allow: /
+
+# Disallow authenticated/private areas
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /api/
+Disallow: /auth/reset-password
+Disallow: /auth/forgot-password
+
+# Allow public pages
+Allow: /pricing
+Allow: /terms
+Allow: /privacy-policy
+Allow: /eula
+
+# Sitemap
+Sitemap: https://www.thecfoline.com/sitemap.xml
