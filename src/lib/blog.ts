@@ -3,7 +3,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import readingTime from 'reading-time';
 
-const contentDirectory = path.join(process.cwd(), 'content/blog');
+const contentDirectory = path.join(process.cwd(), 'content/insights');
 
 export interface BlogPost {
   slug: string;

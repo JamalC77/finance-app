@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, ArrowLeft, Clock, Calendar, User } from 'lucide-react';
 
-interface BlogPostPageProps {
+interface InsightPostPageProps {
   params: Promise<{ slug: string }>;
 }
 
@@ -18,7 +18,7 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: InsightPostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
 
@@ -33,12 +33,12 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     description: post.description,
     authors: [{ name: post.author }],
     alternates: {
-      canonical: `${siteConfig.url}/blog/${slug}`,
+      canonical: `${siteConfig.url}/insights/${slug}`,
     },
     openGraph: {
       title: post.title,
       description: post.description,
-      url: `${siteConfig.url}/blog/${slug}`,
+      url: `${siteConfig.url}/insights/${slug}`,
       type: 'article',
       publishedTime: post.date,
       authors: [post.author],
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   };
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
+export default async function InsightPostPage({ params }: InsightPostPageProps) {
   const { slug } = await params;
   const post = getPostBySlug(slug);
 
@@ -80,7 +80,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     dateModified: post.date,
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `${siteConfig.url}/blog/${slug}`,
+      '@id': `${siteConfig.url}/insights/${slug}`,
     },
     image: post.image,
   };
@@ -103,8 +103,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <span className="text-xl font-bold">CFO Line</span>
           </Link>
           <div className="flex items-center space-x-2">
-            <Link href="/blog">
-              <Button variant="ghost">Blog</Button>
+            <Link href="/insights">
+              <Button variant="ghost">Insights</Button>
             </Link>
             <Link href="/pricing">
               <Button variant="ghost">Pricing</Button>
@@ -124,11 +124,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           <div className="container mx-auto max-w-4xl relative z-10">
             <Link
-              href="/blog"
+              href="/insights"
               className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Blog
+              Back to Insights
             </Link>
 
             <div className="flex flex-wrap gap-2 mb-4">
@@ -200,9 +200,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   Start Your Free Trial
                 </Button>
               </Link>
-              <Link href="/blog">
+              <Link href="/insights">
                 <Button size="lg" variant="outline">
-                  Read More Articles
+                  Read More Insights
                 </Button>
               </Link>
             </div>
@@ -221,8 +221,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               <span className="font-bold">CFO Line</span>
             </Link>
             <div className="flex flex-wrap justify-center gap-6">
-              <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Blog
+              <Link href="/insights" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Insights
               </Link>
               <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Pricing

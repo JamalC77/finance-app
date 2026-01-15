@@ -8,20 +8,26 @@ import { Badge } from '@/components/ui/badge';
 import { DollarSign, ArrowRight, Clock, Calendar } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Blog | CFO Line - Financial Insights & Business Tips',
-  description: 'Expert insights on financial management, cash flow optimization, and business growth strategies from the CFO Line team.',
+  title: 'Insights | CFO Line - Financial Strategy & Business Growth',
+  description: 'Expert insights on financial strategy, cash flow optimization, and business growth from the CFO Line team. Playbooks, case studies, and decision frameworks.',
   alternates: {
-    canonical: `${siteConfig.url}/blog`,
+    canonical: `${siteConfig.url}/insights`,
   },
   openGraph: {
-    title: 'Blog | CFO Line - Financial Insights & Business Tips',
-    description: 'Expert insights on financial management, cash flow optimization, and business growth strategies.',
-    url: `${siteConfig.url}/blog`,
+    title: 'Insights | CFO Line - Financial Strategy & Business Growth',
+    description: 'Expert insights on financial strategy, cash flow optimization, and business growth.',
+    url: `${siteConfig.url}/insights`,
     type: 'website',
   },
 };
 
-export default function BlogPage() {
+const categoryColors: Record<string, string> = {
+  'CFO Brief': 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+  'Playbook': 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  'Decision': 'bg-violet-500/10 text-violet-600 border-violet-500/20',
+};
+
+export default function InsightsPage() {
   const posts = getAllPosts();
 
   return (
@@ -58,20 +64,20 @@ export default function BlogPage() {
 
           <div className="container mx-auto max-w-6xl text-center relative z-10">
             <Badge className="mb-6 px-4 py-2 text-sm bg-primary/10 text-primary border-primary/20">
-              CFO Line Blog
+              CFO Line Insights
             </Badge>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              Financial Insights for{" "}
+              Financial Strategy for{" "}
               <span className="gradient-text">Growing Businesses</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              Expert advice on financial management, cash flow optimization, and strategies
-              to help your business thrive.
+              Playbooks, case studies, and decision frameworks to help you
+              make smarter financial decisions.
             </p>
           </div>
         </section>
 
-        {/* Blog Posts */}
+        {/* Posts */}
         <section className="py-16 px-4">
           <div className="container mx-auto max-w-6xl">
             {posts.length === 0 ? (
@@ -86,58 +92,57 @@ export default function BlogPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {posts.map((post) => (
-                  <Link key={post.slug} href={`/blog/${post.slug}`}>
-                    <Card className="h-full card-hover border-gradient bg-card overflow-hidden group">
-                      {post.image && (
-                        <div className="aspect-video overflow-hidden">
-                          <img
-                            src={post.image}
-                            alt={post.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                      )}
-                      <CardHeader>
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {post.tags.slice(0, 2).map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="text-xs bg-primary/10 text-primary"
-                            >
-                              {tag}
+                {posts.map((post) => {
+                  const category = post.tags[0] || 'Insight';
+                  const colorClass = categoryColors[category] || 'bg-primary/10 text-primary border-primary/20';
+
+                  return (
+                    <Link key={post.slug} href={`/insights/${post.slug}`}>
+                      <Card className="h-full card-hover border-gradient bg-card overflow-hidden group">
+                        {post.image && (
+                          <div className="aspect-video overflow-hidden">
+                            <img
+                              src={post.image}
+                              alt={post.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                        )}
+                        <CardHeader>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <Badge className={`text-xs ${colorClass}`}>
+                              {category}
                             </Badge>
-                          ))}
-                        </div>
-                        <CardTitle className="text-xl group-hover:text-primary transition-colors line-clamp-2">
-                          {post.title}
-                        </CardTitle>
-                        <CardDescription className="line-clamp-2">
-                          {post.description}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {new Date(post.date).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{post.readingTime}</span>
+                          <CardTitle className="text-xl group-hover:text-primary transition-colors line-clamp-2">
+                            {post.title}
+                          </CardTitle>
+                          <CardDescription className="line-clamp-2">
+                            {post.description}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-4 w-4" />
+                              <span>
+                                {new Date(post.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{post.readingTime}</span>
+                            </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -173,8 +178,8 @@ export default function BlogPage() {
               <span className="font-bold">CFO Line</span>
             </Link>
             <div className="flex flex-wrap justify-center gap-6">
-              <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Blog
+              <Link href="/insights" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Insights
               </Link>
               <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Pricing
