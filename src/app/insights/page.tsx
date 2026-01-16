@@ -5,7 +5,7 @@ import { siteConfig } from '@/lib/seo.config';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, ArrowRight, Clock, Calendar } from 'lucide-react';
+import { DollarSign, Clock, Calendar } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Insights | CFO Line - Financial Strategy & Business Growth',
@@ -42,14 +42,8 @@ export default function InsightsPage() {
             <span className="text-xl font-bold">CFO Line</span>
           </Link>
           <div className="flex items-center space-x-2">
-            <Link href="/pricing">
-              <Button variant="ghost">Pricing</Button>
-            </Link>
-            <Link href="/auth/login">
-              <Button variant="ghost">Log In</Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button className="btn-shine">Sign Up</Button>
+            <Link href="/">
+              <Button variant="ghost">Home</Button>
             </Link>
           </div>
         </div>
@@ -148,23 +142,6 @@ export default function InsightsPage() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-24 px-4 relative overflow-hidden bg-muted/30">
-          <div className="container mx-auto max-w-3xl text-center relative z-10">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Transform Your Finances?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-10">
-              Start your free trial and see how CFO Line can help your business grow.
-            </p>
-            <Link href="/auth/register">
-              <Button size="lg" className="text-lg px-8 h-14 btn-shine">
-                Start Your Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
@@ -181,14 +158,11 @@ export default function InsightsPage() {
               <Link href="/insights" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Insights
               </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
               <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Service
+              <Link href="/eula" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Terms
               </Link>
             </div>
             <div className="text-sm text-muted-foreground">

@@ -106,11 +106,8 @@ export default async function InsightPostPage({ params }: InsightPostPageProps) 
             <Link href="/insights">
               <Button variant="ghost">Insights</Button>
             </Link>
-            <Link href="/pricing">
-              <Button variant="ghost">Pricing</Button>
-            </Link>
-            <Link href="/auth/register">
-              <Button className="btn-shine">Sign Up</Button>
+            <Link href="/">
+              <Button variant="ghost">Home</Button>
             </Link>
           </div>
         </div>
@@ -185,29 +182,6 @@ export default async function InsightPostPage({ params }: InsightPostPageProps) 
           </article>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-16 px-4 bg-muted/30">
-          <div className="container mx-auto max-w-3xl text-center">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">
-              Want better financial insights?
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              CFO Line helps you transform your QuickBooks data into actionable business intelligence.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth/register">
-                <Button size="lg" className="btn-shine">
-                  Start Your Free Trial
-                </Button>
-              </Link>
-              <Link href="/insights">
-                <Button size="lg" variant="outline">
-                  Read More Insights
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
@@ -224,14 +198,11 @@ export default async function InsightPostPage({ params }: InsightPostPageProps) 
               <Link href="/insights" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Insights
               </Link>
-              <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
               <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Service
+              <Link href="/eula" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Terms
               </Link>
             </div>
             <div className="text-sm text-muted-foreground">
