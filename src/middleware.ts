@@ -8,6 +8,7 @@ const ALLOWED_ROUTES = [
   '/eula',
   '/pricing',
   '/about',
+  '/demo',
 ];
 
 // Route prefixes that are allowed (for dynamic routes)
