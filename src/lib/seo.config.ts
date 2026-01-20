@@ -63,6 +63,11 @@ export const pageMetadata = {
     description: 'CFO Line End User License Agreement (EULA). Read the software license terms for using CFO Line.',
     canonical: 'https://www.thecfoline.com/eula',
   },
+  about: {
+    title: 'About Us | CFO Line - Fractional Finance Leadership',
+    description: 'Meet the team behind CFO Line. We provide fractional finance leadership for growing businesses, combining strategic expertise with AI-powered workflows.',
+    canonical: 'https://www.thecfoline.com/about',
+  },
 }
 
 // Structured data for Organization

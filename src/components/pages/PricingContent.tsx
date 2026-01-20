@@ -1,256 +1,373 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ArrowRight, DollarSign, Sparkles, Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Check, ArrowRight, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const tiers = [
+  {
+    name: "Staff Accountant",
+    tagline: "Clean books, on time",
+    price: "$2,500",
+    period: "/mo",
+    features: [
+      "Monthly bookkeeping & reconciliations",
+      "Close-ready books",
+      "Basic financial statements",
+      "Payroll coordination",
+    ],
+    cta: "Get Started",
+    highlighted: false,
+  },
+  {
+    name: "Fractional Controller",
+    tagline: "Close with confidence",
+    price: "$4,750",
+    period: "/mo",
+    features: [
+      "Everything in Staff Accountant",
+      "Owns the month-end close",
+      "Reporting pack & variance analysis",
+      "Systems & controls",
+      "Monthly review call",
+    ],
+    cta: "Get Started",
+    highlighted: true,
+  },
+  {
+    name: "Fractional CFO",
+    tagline: "Strategic clarity",
+    price: "$7,000",
+    period: "/mo",
+    features: [
+      "Everything in Controller",
+      "Cash forecasting",
+      "Scenario modeling",
+      "Board pack prep",
+      "Strategic guidance",
+      "1-2 calls per month",
+    ],
+    cta: "Get Started",
+    highlighted: false,
+  },
+];
+
+const addOns = [
+  { name: "AP Processing", price: "from $750/mo" },
+  { name: "AR Collections", price: "from $750/mo" },
+  { name: "Multi-Entity", price: "+50% per entity" },
+  { name: "Inventory Accounting", price: "Custom" },
+];
+
+const steps = [
+  {
+    number: "1",
+    title: "Start with a Diagnostic",
+    description:
+      "We analyze your financials and deliver a CFO Brief with your top issues, cash analysis, and a 90-day roadmap.",
+    note: "$2,500, credited toward your first month.",
+  },
+  {
+    number: "2",
+    title: "90-Day Implementation",
+    description:
+      "We set up systems, clean up history, and establish your reporting cadence.",
+    note: null,
+  },
+  {
+    number: "3",
+    title: "Ongoing Support",
+    description:
+      "Month-to-month after implementation. Scale up or down as you grow.",
+    note: null,
+  },
+];
+
+const faqs = [
+  {
+    question: "What's included in the 90-day implementation?",
+    answer:
+      "Systems setup, historical cleanup, reporting framework, and process documentation. This is the foundation that makes ongoing support efficient.",
+  },
+  {
+    question: "Can I cancel anytime?",
+    answer:
+      "Yes, after the 90-day implementation period. Month-to-month after that with no long-term contracts.",
+  },
+  {
+    question: "What if I need AP/AR management?",
+    answer:
+      "AP and AR processing are available as add-ons, priced based on your volume. We'll scope this during the diagnostic.",
+  },
+];
 
 export function PricingContent() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 glass border-b">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center group">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mr-3 group-hover:bg-primary/20 transition-colors">
-              <DollarSign className="h-6 w-6 text-primary" />
-            </div>
-            <span className="text-xl font-bold">CFO Line</span>
-          </Link>
-          <div className="flex items-center space-x-2">
-            <Link href="/auth/login">
-              <Button variant="ghost">Log In</Button>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/"
+              className="text-sm font-medium tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+            >
+              THE CFO LINE
             </Link>
-            <Link href="/auth/register">
-              <Button className="btn-shine">Sign Up</Button>
-            </Link>
+            <nav className="hidden sm:flex items-center gap-4">
+              <Link
+                href="/about"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                About Us
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-sm text-foreground font-medium transition-colors"
+              >
+                Pricing
+              </Link>
+            </nav>
           </div>
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span>Talk to us</span>
+            <Calendar className="h-4 w-4" />
+          </Link>
         </div>
       </header>
 
-      <main className="flex-grow">
-        {/* Pricing Header */}
-        <section className="relative py-24 px-4 overflow-hidden">
-          {/* Background effects */}
-          <div className="absolute inset-0 gradient-hero"></div>
-          <div className="absolute inset-0 pattern-grid"></div>
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-violet-500/5 rounded-full blur-3xl"></div>
+      {/* Hero */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-4xl text-center">
+          <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-medium text-foreground tracking-tight leading-tight">
+            Financial leadership
+            <br />
+            <span className="italic text-foreground/70">that scales with you</span>
+          </h1>
+          <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
+            Fractional finance teams for growing businesses. Cancel anytime.
+          </p>
+        </div>
+      </section>
 
-          <div className="container mx-auto max-w-6xl text-center relative z-10">
-            <Badge className="mb-6 px-4 py-2 text-sm bg-primary/10 text-primary border-primary/20">
-              Simple, Transparent Pricing
-            </Badge>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-              Choose the Right Plan for{" "}
-              <span className="gradient-text">Your Business</span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-10 max-w-3xl mx-auto">
-              Start with a 14-day free trial. No credit card required.
-              Upgrade or downgrade anytime as your needs change.
-            </p>
+      {/* Pricing Tiers */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-3 gap-6">
+            {tiers.map((tier) => (
+              <div
+                key={tier.name}
+                className={cn(
+                  "rounded-2xl border p-8 flex flex-col",
+                  tier.highlighted
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                    : "border-border/50 bg-background"
+                )}
+              >
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {tier.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {tier.tagline}
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <span className="text-4xl font-semibold text-foreground">
+                    {tier.price}
+                  </span>
+                  <span className="text-muted-foreground">{tier.period}</span>
+                </div>
+
+                <ul className="space-y-3 mb-8 flex-1">
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <span className="text-sm text-muted-foreground">
+                        {feature}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href="/"
+                  className={cn(
+                    "w-full py-3 px-4 rounded-full text-center text-sm font-medium transition-colors",
+                    tier.highlighted
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : "bg-muted text-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {tier.cta}
+                </Link>
+              </div>
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Pricing Cards */}
-        <section className="py-16 px-4 relative">
-          <div className="container mx-auto max-w-5xl">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Basic Plan */}
-              <Card className="flex flex-col card-hover border-gradient bg-card relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-                <CardHeader className="relative z-10">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="feature-icon">
-                      <Sparkles className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-2xl">Basic Analytics</CardTitle>
-                      <CardDescription className="text-base">Financial reports and analytics</CardDescription>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-5xl font-bold">$50</span>
-                    <span className="text-muted-foreground text-lg">/month</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">Billed monthly • 14-day free trial</p>
-                </CardHeader>
-                <CardContent className="flex-grow relative z-10">
-                  <ul className="space-y-4">
-                    {[
-                      "Comprehensive financial reports",
-                      "In-depth business analytics",
-                      "Cash flow forecasting",
-                      "QuickBooks integration",
-                      "Interactive data visualizations",
-                      "Email support"
-                    ].map((feature, i) => (
-                      <li key={i} className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 mr-3">
-                          <Check className="h-3 w-3 text-emerald-500" />
-                        </div>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter className="relative z-10">
-                  <Link href="/auth/register" className="w-full">
-                    <Button size="lg" className="w-full h-12 text-base btn-shine">
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
+      {/* How It Works */}
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-medium text-foreground text-center mb-12">
+            How it works
+          </h2>
 
-              {/* Enterprise Plan */}
-              <Card className="flex flex-col card-hover bg-card relative overflow-hidden border-2 border-primary/30">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-violet-500 to-emerald-500"></div>
-                <div className="absolute top-0 left-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2"></div>
-                <CardHeader className="relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="feature-icon">
-                        <Building2 className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-2xl">Fractional CFO</CardTitle>
-                        <CardDescription className="text-base">Full-service accounting solution</CardDescription>
-                      </div>
-                    </div>
-                    <Badge className="bg-primary/10 text-primary border-primary/20">Most Popular</Badge>
-                  </div>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">Custom Pricing</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-2">Tailored to your business needs</p>
-                </CardHeader>
-                <CardContent className="flex-grow relative z-10">
-                  <ul className="space-y-4">
-                    {[
-                      "Everything in Basic Analytics",
-                      "Dedicated Fractional CFO service",
-                      "Strategic financial planning",
-                      "Tax optimization strategies",
-                      "Business growth consulting",
-                      "Financial risk management",
-                      "Priority support & onboarding"
-                    ].map((feature, i) => (
-                      <li key={i} className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5 mr-3">
-                          <Check className="h-3 w-3 text-emerald-500" />
-                        </div>
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter className="relative z-10">
-                  <Link href="mailto:sales@thecfoline.com" className="w-full">
-                    <Button size="lg" className="w-full h-12 text-base" variant="outline">
-                      Contact Sales
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
+          <div className="space-y-8">
+            {steps.map((step) => (
+              <div key={step.number} className="flex gap-6 items-start">
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold">
+                  {step.number}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground">{step.description}</p>
+                  {step.note && (
+                    <p className="text-sm text-primary mt-2 font-medium">
+                      {step.note}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Add-Ons */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <h2 className="text-xl font-semibold text-foreground text-center mb-8">
+            Need more support?
+          </h2>
+
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {addOns.map((addon) => (
+              <div
+                key={addon.name}
+                className="border border-border/50 rounded-xl p-4 text-center"
+              >
+                <p className="font-medium text-foreground">{addon.name}</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {addon.price}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* What We're Not */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-medium text-foreground mb-4">
+            We're not your accounting department.
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            We're the strategic layer that makes your numbers work for you.
+          </p>
+
+          <div className="grid sm:grid-cols-3 gap-6 text-left">
+            <div className="p-6 bg-background rounded-xl border border-border/50">
+              <p className="font-medium text-foreground">Leadership, not labor</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Strategic guidance, not just data entry
+              </p>
+            </div>
+            <div className="p-6 bg-background rounded-xl border border-border/50">
+              <p className="font-medium text-foreground">AI-powered workflows</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Faster close, less manual work
+              </p>
+            </div>
+            <div className="p-6 bg-background rounded-xl border border-border/50">
+              <p className="font-medium text-foreground">One team that scales</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Grow from Staff to CFO as you need
+              </p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* FAQ Section */}
-        <section className="py-24 px-4 bg-muted/30">
-          <div className="container mx-auto max-w-4xl">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-              <p className="text-muted-foreground text-lg">Everything you need to know about our pricing</p>
-            </div>
+      {/* CTA */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-2xl text-center">
+          <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-medium text-foreground mb-4">
+            Ready to get clarity on your numbers?
+          </h2>
 
-            <div className="grid gap-6">
-              {[
-                {
-                  q: "Can I switch between plans?",
-                  a: "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle."
-                },
-                {
-                  q: "Is there a free trial?",
-                  a: "We offer a 14-day free trial for all new users to explore our Basic Analytics plan features. No credit card required."
-                },
-                {
-                  q: "What's included in the Fractional CFO service?",
-                  a: "Our Fractional CFO service provides you with dedicated financial expertise, strategic planning, and personalized accounting services tailored to your business needs."
-                },
-                {
-                  q: "How secure is my financial data?",
-                  a: "We use industry-standard encryption and security practices to keep your data safe. Your information is never shared with third parties without your explicit consent."
-                },
-                {
-                  q: "Can I cancel my subscription?",
-                  a: "Yes, you can cancel your subscription at any time. You'll continue to have access until the end of your current billing period."
-                }
-              ].map((faq, i) => (
-                <Card key={i} className="card-hover bg-card border-gradient">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-semibold">{faq.q}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{faq.a}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-24 px-4 relative overflow-hidden">
-          <div className="absolute inset-0 gradient-hero"></div>
-          <div className="absolute inset-0 pattern-grid"></div>
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-3xl"></div>
-
-          <div className="container mx-auto max-w-3xl text-center relative z-10">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Transform Your Financial Management?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-10">
-              Start your free trial today and see why businesses trust CFO Line for their financial insights.
-            </p>
-            <Link href="/auth/register">
-              <Button size="lg" className="text-lg px-8 h-14 btn-shine">
-                Start Your Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
+            >
+              Start with a Diagnostic
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-border text-foreground font-medium hover:bg-muted transition-colors"
+            >
+              Schedule a Call
             </Link>
           </div>
-        </section>
-      </main>
+
+          <p className="text-sm text-muted-foreground mt-4">
+            $2,500, credited toward your first month
+          </p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-3xl">
+          <h2 className="text-xl font-semibold text-foreground text-center mb-8">
+            Frequently asked questions
+          </h2>
+
+          <div className="space-y-6">
+            {faqs.map((faq) => (
+              <div
+                key={faq.question}
+                className="bg-background rounded-xl border border-border/50 p-6"
+              >
+                <h3 className="font-medium text-foreground mb-2">
+                  {faq.question}
+                </h3>
+                <p className="text-sm text-muted-foreground">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-muted/50 py-12 px-4 border-t">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <Link href="/" className="flex items-center group">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center mr-2">
-                <DollarSign className="h-5 w-5 text-primary" />
-              </div>
-              <span className="font-bold">CFO Line</span>
+      <footer className="py-8 px-4 border-t border-border/40">
+        <div className="container mx-auto max-w-6xl flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} The CFO Line. All rights reserved.
+          </p>
+          <div className="flex gap-6">
+            <Link
+              href="/about"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              About
             </Link>
-            <div className="flex flex-wrap justify-center gap-6">
-              <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/eula" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                EULA
-              </Link>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} CFO Line. All rights reserved.
-            </div>
+            <Link
+              href="/pricing"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Pricing
+            </Link>
           </div>
         </div>
       </footer>

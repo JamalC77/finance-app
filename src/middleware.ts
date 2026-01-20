@@ -6,13 +6,12 @@ const ALLOWED_ROUTES = [
   '/',
   '/privacy-policy',
   '/eula',
-  '/insights',
+  '/pricing',
+  '/about',
 ];
 
 // Route prefixes that are allowed (for dynamic routes)
-const ALLOWED_PREFIXES = [
-  '/insights/',
-];
+const ALLOWED_PREFIXES: string[] = [];
 
 // Static file patterns to allow
 const STATIC_FILE_PATTERNS = [
