@@ -6,6 +6,47 @@ import Link from "next/link";
 import { QuickPromptButtons } from "./chat/QuickPromptButtons";
 import { cn } from "@/lib/utils";
 
+// Helper function to render message content with clickable links
+function renderMessageWithLinks(content: string, onCalendlyClick?: () => void): React.ReactNode {
+  // URL regex pattern
+  const urlPattern = /(https?:\/\/[^\s]+)/g;
+
+  const parts = content.split(urlPattern);
+
+  if (parts.length === 1) {
+    // No URLs found, return plain text
+    return content;
+  }
+
+  return parts.map((part, index) => {
+    if (urlPattern.test(part)) {
+      // Reset lastIndex since we're reusing the pattern
+      urlPattern.lastIndex = 0;
+
+      // Check if it's a Calendly link
+      const isCalendlyLink = part.includes('calendly.com');
+
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => {
+            if (isCalendlyLink && onCalendlyClick) {
+              onCalendlyClick();
+            }
+          }}
+          className="text-primary hover:text-primary/80 underline underline-offset-2 transition-colors"
+        >
+          {isCalendlyLink ? 'Book a call here' : part}
+        </a>
+      );
+    }
+    return part;
+  });
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -355,7 +396,9 @@ export function DiagnosticChat() {
                     )}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.content}
+                      {message.role === "assistant"
+                        ? renderMessageWithLinks(message.content, handleCalendlyClick)
+                        : message.content}
                     </p>
                   </div>
                 </div>
