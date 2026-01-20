@@ -373,6 +373,19 @@ export function DiagnosticChat() {
                 </button>
               </div>
             )}
+
+            {/* About Us link */}
+            <div className="pt-6 border-t border-border/30 mt-8">
+              <p className="text-xs text-muted-foreground/70 mb-3">
+                Want to know more about us first?
+              </p>
+              <Link
+                href="/about"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-border/50 text-sm text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/30 transition-all"
+              >
+                About Us
+              </Link>
+            </div>
           </div>
         ) : (
           /* Conversation state - chat interface */

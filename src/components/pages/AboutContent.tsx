@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Calendar, Users, Zap, Target } from "lucide-react";
+import { ArrowRight, Calendar, Users, Zap, Target, BookOpen, TrendingUp, PieChart, FileText } from "lucide-react";
 
 const values = [
   {
@@ -39,6 +39,33 @@ const differentiators = [
     title: "Not just software",
     description:
       "Tools are only as good as the people using them. You get experienced finance professionals, not just a dashboard.",
+  },
+];
+
+const services = [
+  {
+    icon: BookOpen,
+    title: "Monthly Close & Reporting",
+    description:
+      "Fast, accurate month-end closes with clear financial statements. Know where you stand within days, not weeks.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Cash Flow Management",
+    description:
+      "13-week cash forecasts, AR/AP optimization, and runway planning. Never be surprised by a cash crunch again.",
+  },
+  {
+    icon: PieChart,
+    title: "Financial Analysis",
+    description:
+      "Unit economics, margin analysis, and profitability by customer/product. Understand what's actually driving your numbers.",
+  },
+  {
+    icon: FileText,
+    title: "Strategic Planning",
+    description:
+      "Budgets, forecasts, and scenario modeling. Make confident decisions about hiring, spending, and growth.",
   },
 ];
 
@@ -119,8 +146,54 @@ export function AboutContent() {
         </div>
       </section>
 
-      {/* Our Values */}
+      {/* Services */}
       <section className="py-20 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-medium text-foreground text-center mb-4">
+            What we do
+          </h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            From day-to-day financial operations to strategic guidance, we handle
+            the finance function so you can focus on running your business.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {services.map((service) => (
+              <div
+                key={service.title}
+                className="p-6 bg-muted/30 rounded-xl border border-border/30 hover:border-border/50 transition-colors"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <service.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">
+                      {service.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {service.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              See our pricing tiers
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Values */}
+      <section className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto max-w-5xl">
           <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-medium text-foreground text-center mb-12">
             How we work
@@ -143,7 +216,7 @@ export function AboutContent() {
       </section>
 
       {/* What We're Not */}
-      <section className="py-16 px-4 bg-muted/30">
+      <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl">
           <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-medium text-foreground text-center mb-12">
             What we're not
