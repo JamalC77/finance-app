@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Calendar, Loader2, Sparkles, X } from "lucide-react";
+import { Send, Calendar, Loader2, Sparkles, X, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { QuickPromptButtons } from "./chat/QuickPromptButtons";
 import { cn } from "@/lib/utils";
@@ -68,62 +68,10 @@ const INITIAL_QUICK_PROMPTS = [
   "I don't trust my numbers",
 ];
 
-// Keywords that trigger demo panels
-const DEMO_TRIGGERS: Record<string, { panel: PanelType; highlight: HighlightType }> = {
-  // Cash flow triggers
-  "cash flow": { panel: "cashflow", highlight: "janfeb" },
-  "cash conversion": { panel: "cashflow", highlight: "conversion" },
-  "cash crunch": { panel: "cashflow", highlight: "janfeb" },
-  "working capital": { panel: "cashflow", highlight: "conversion" },
-  "cash tight": { panel: "cashflow", highlight: "janfeb" },
-  "runway": { panel: "cashflow", highlight: null },
-
-  // P&L triggers
-  "margin": { panel: "pnl", highlight: "margin" },
-  "profitable": { panel: "pnl", highlight: "margin" },
-  "profitability": { panel: "pnl", highlight: "margin" },
-  "revenue": { panel: "pnl", highlight: "metrics" },
-  "net income": { panel: "pnl", highlight: "margin" },
-  "gross margin": { panel: "pnl", highlight: "margin" },
-  "service mix": { panel: "pnl", highlight: "services" },
-
-  // AR triggers
-  "receivables": { panel: "ar", highlight: "aging" },
-  "ar aging": { panel: "ar", highlight: "aging" },
-  "collections": { panel: "ar", highlight: "aging" },
-  "dso": { panel: "ar", highlight: "aging" },
-  "past due": { panel: "ar", highlight: "aging" },
-
-  // Provider triggers
-  "utilization": { panel: "providers", highlight: "utilization" },
-  "provider": { panel: "providers", highlight: "utilization" },
-  "team performance": { panel: "providers", highlight: "utilization" },
-  "capacity": { panel: "providers", highlight: "utilization" },
-};
-
-// Check if message should trigger a demo panel
-function checkForDemoTrigger(message: string): { panel: PanelType; highlight: HighlightType } | null {
-  const lowerMessage = message.toLowerCase();
-
-  for (const [trigger, config] of Object.entries(DEMO_TRIGGERS)) {
-    if (lowerMessage.includes(trigger)) {
-      return config;
-    }
-  }
-
-  return null;
-}
-
-// Generate a unique session ID
+// Generate a unique session ID (new session on every page load)
 function generateSessionId(): string {
   if (typeof window === "undefined") return "";
-
-  const stored = localStorage.getItem("cfoline_diagnostic_session_id");
-  if (stored) return stored;
-
-  const newId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-  localStorage.setItem("cfoline_diagnostic_session_id", newId);
-  return newId;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
 // Get UTM parameters from URL
@@ -151,6 +99,7 @@ export function DiagnosticChat() {
   // Demo panel state
   const [currentPanel, setCurrentPanel] = useState<PanelType>(null);
   const [currentHighlight, setCurrentHighlight] = useState<HighlightType>(null);
+  const [lastPanel, setLastPanel] = useState<{ panel: PanelType; highlight: HighlightType } | null>(null);
   const [showDemoCTA, setShowDemoCTA] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -171,9 +120,10 @@ export function DiagnosticChat() {
       .catch(console.error);
   }, []);
 
-  // Initialize session
-  const initializeSession = useCallback(async () => {
-    if (isInitializing || sessionId) return;
+  // Initialize session - returns the session ID
+  const initializeSession = useCallback(async (): Promise<string | null> => {
+    if (isInitializing) return sessionId;
+    if (sessionId) return sessionId;
 
     setIsInitializing(true);
     try {
@@ -206,6 +156,7 @@ export function DiagnosticChat() {
       );
       setQuickPrompts(data.quickPrompts || INITIAL_QUICK_PROMPTS);
       setHasStarted(true);
+      return data.sessionId; // Return the session ID
     } catch (error) {
       console.error("Failed to initialize chat:", error);
       // Show error state
@@ -218,6 +169,7 @@ export function DiagnosticChat() {
         },
       ]);
       setHasStarted(true);
+      return null;
     } finally {
       setIsInitializing(false);
     }
@@ -228,9 +180,14 @@ export function DiagnosticChat() {
     const userMessage = (messageText || inputValue).trim();
     if (!userMessage || isLoading) return;
 
-    // Initialize session if needed
-    if (!sessionId) {
-      await initializeSession();
+    // Initialize session if needed and get the session ID
+    let sid = sessionId;
+    if (!sid) {
+      sid = await initializeSession();
+      if (!sid) {
+        // Session initialization failed
+        return;
+      }
     }
 
     setInputValue("");
@@ -245,8 +202,6 @@ export function DiagnosticChat() {
     setIsLoading(true);
 
     try {
-      const sid = sessionId || generateSessionId();
-
       const response = await fetch(`${API_BASE}/api/public/chat/message`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -269,13 +224,13 @@ export function DiagnosticChat() {
         { role: "assistant", content: data.response, timestamp: new Date() },
       ]);
 
-      // Check if the response should trigger a demo panel
-      const trigger = checkForDemoTrigger(data.response);
-      if (trigger) {
+      // Check if the AI explicitly wants to show a demo panel
+      if (data.demoPanel) {
         // Delay panel appearance for dramatic effect
         setTimeout(() => {
-          setCurrentPanel(trigger.panel);
-          setCurrentHighlight(trigger.highlight);
+          setCurrentPanel(data.demoPanel);
+          setCurrentHighlight(data.demoHighlight || null);
+          setLastPanel({ panel: data.demoPanel, highlight: data.demoHighlight || null });
         }, 500);
       }
 
@@ -345,10 +300,21 @@ export function DiagnosticChat() {
     }
   };
 
-  // Close demo panel
+  // Close demo panel (but remember it so user can reopen)
   const closePanel = () => {
+    if (currentPanel) {
+      setLastPanel({ panel: currentPanel, highlight: currentHighlight });
+    }
     setCurrentPanel(null);
     setCurrentHighlight(null);
+  };
+
+  // Reopen the last shown demo panel
+  const reopenPanel = () => {
+    if (lastPanel) {
+      setCurrentPanel(lastPanel.panel);
+      setCurrentHighlight(lastPanel.highlight);
+    }
   };
 
   return (
@@ -591,10 +557,21 @@ export function DiagnosticChat() {
         )}
         </div>
 
-        {/* Demo Dashboard Panel - slides in from right */}
+        {/* Floating button to reopen demo panel */}
+        {!currentPanel && lastPanel && hasStarted && (
+          <button
+            onClick={reopenPanel}
+            className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex items-center gap-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded-lg text-sm text-primary hover:bg-primary/20 hover:border-primary/50 transition-all animate-in slide-in-from-right duration-300"
+          >
+            <BarChart3 className="h-4 w-4" />
+            <span>Show Demo</span>
+          </button>
+        )}
+
+        {/* Demo Dashboard Panel - slides in from right, sticky to viewport */}
         {currentPanel && (
-          <div className="w-[55%] h-[calc(100vh-65px)] overflow-y-auto p-6 bg-black/30 border-l border-border/40 animate-in slide-in-from-right duration-500">
-            <div className="mb-5 flex justify-between items-center">
+          <div className="w-[55%] sticky top-[65px] h-[calc(100vh-65px)] overflow-y-auto p-6 bg-black/30 border-l border-border/40 animate-in slide-in-from-right duration-500">
+            <div className="mb-5 flex justify-between items-center sticky top-0 bg-black/30 backdrop-blur-sm z-10 -mx-6 px-6 py-3 -mt-6 border-b border-border/20">
               <div>
                 <div className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1">
                   Example: Glow Aesthetics
@@ -614,10 +591,12 @@ export function DiagnosticChat() {
               </div>
             </div>
 
-            {currentPanel === "cashflow" && <CashFlowPanel highlight={currentHighlight} />}
-            {currentPanel === "pnl" && <PnLPanel highlight={currentHighlight} />}
-            {currentPanel === "ar" && <ARPanel highlight={currentHighlight} />}
-            {currentPanel === "providers" && <ProvidersPanel highlight={currentHighlight} />}
+            <div className="pt-2">
+              {currentPanel === "cashflow" && <CashFlowPanel highlight={currentHighlight} />}
+              {currentPanel === "pnl" && <PnLPanel highlight={currentHighlight} />}
+              {currentPanel === "ar" && <ARPanel highlight={currentHighlight} />}
+              {currentPanel === "providers" && <ProvidersPanel highlight={currentHighlight} />}
+            </div>
           </div>
         )}
       </main>
