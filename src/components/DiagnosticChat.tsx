@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Send, Calendar, Loader2, Sparkles } from "lucide-react";
+import { Send, Calendar, Loader2, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { QuickPromptButtons } from "./chat/QuickPromptButtons";
 import { cn } from "@/lib/utils";
+import { CashFlowPanel } from "./demo/CashFlowPanel";
+import { PnLPanel } from "./demo/PnLPanel";
+import { ARPanel } from "./demo/ARPanel";
+import { ProvidersPanel } from "./demo/ProvidersPanel";
+import { DemoCTAPanel } from "./demo/DemoCTAPanel";
+import type { PanelType, HighlightType } from "./demo/demoData";
 
 // Helper function to render message content with clickable links
 function renderMessageWithLinks(content: string, onCalendlyClick?: () => void): React.ReactNode {
@@ -62,6 +68,52 @@ const INITIAL_QUICK_PROMPTS = [
   "I don't trust my numbers",
 ];
 
+// Keywords that trigger demo panels
+const DEMO_TRIGGERS: Record<string, { panel: PanelType; highlight: HighlightType }> = {
+  // Cash flow triggers
+  "cash flow": { panel: "cashflow", highlight: "janfeb" },
+  "cash conversion": { panel: "cashflow", highlight: "conversion" },
+  "cash crunch": { panel: "cashflow", highlight: "janfeb" },
+  "working capital": { panel: "cashflow", highlight: "conversion" },
+  "cash tight": { panel: "cashflow", highlight: "janfeb" },
+  "runway": { panel: "cashflow", highlight: null },
+
+  // P&L triggers
+  "margin": { panel: "pnl", highlight: "margin" },
+  "profitable": { panel: "pnl", highlight: "margin" },
+  "profitability": { panel: "pnl", highlight: "margin" },
+  "revenue": { panel: "pnl", highlight: "metrics" },
+  "net income": { panel: "pnl", highlight: "margin" },
+  "gross margin": { panel: "pnl", highlight: "margin" },
+  "service mix": { panel: "pnl", highlight: "services" },
+
+  // AR triggers
+  "receivables": { panel: "ar", highlight: "aging" },
+  "ar aging": { panel: "ar", highlight: "aging" },
+  "collections": { panel: "ar", highlight: "aging" },
+  "dso": { panel: "ar", highlight: "aging" },
+  "past due": { panel: "ar", highlight: "aging" },
+
+  // Provider triggers
+  "utilization": { panel: "providers", highlight: "utilization" },
+  "provider": { panel: "providers", highlight: "utilization" },
+  "team performance": { panel: "providers", highlight: "utilization" },
+  "capacity": { panel: "providers", highlight: "utilization" },
+};
+
+// Check if message should trigger a demo panel
+function checkForDemoTrigger(message: string): { panel: PanelType; highlight: HighlightType } | null {
+  const lowerMessage = message.toLowerCase();
+
+  for (const [trigger, config] of Object.entries(DEMO_TRIGGERS)) {
+    if (lowerMessage.includes(trigger)) {
+      return config;
+    }
+  }
+
+  return null;
+}
+
 // Generate a unique session ID
 function generateSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -95,6 +147,11 @@ export function DiagnosticChat() {
   const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
   const [hasStarted, setHasStarted] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+
+  // Demo panel state
+  const [currentPanel, setCurrentPanel] = useState<PanelType>(null);
+  const [currentHighlight, setCurrentHighlight] = useState<HighlightType>(null);
+  const [showDemoCTA, setShowDemoCTA] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -206,10 +263,28 @@ export function DiagnosticChat() {
 
       const data = await response.json();
 
+      // Add assistant message
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.response, timestamp: new Date() },
       ]);
+
+      // Check if the response should trigger a demo panel
+      const trigger = checkForDemoTrigger(data.response);
+      if (trigger) {
+        // Delay panel appearance for dramatic effect
+        setTimeout(() => {
+          setCurrentPanel(trigger.panel);
+          setCurrentHighlight(trigger.highlight);
+        }, 500);
+      }
+
+      // Check if we should show CTA (after several messages about pain points)
+      if (messages.length >= 4 && data.response.toLowerCase().includes("diagnostic")) {
+        setTimeout(() => {
+          setShowDemoCTA(true);
+        }, 1000);
+      }
 
       // Update quick prompts based on conversation context
       if (data.quickPrompts) {
@@ -270,6 +345,12 @@ export function DiagnosticChat() {
     }
   };
 
+  // Close demo panel
+  const closePanel = () => {
+    setCurrentPanel(null);
+    setCurrentHighlight(null);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -280,12 +361,6 @@ export function DiagnosticChat() {
               THE CFO LINE
             </span>
             <nav className="hidden sm:flex items-center gap-4">
-              <Link
-                href="/demo"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                See Demo
-              </Link>
               <Link
                 href="/about"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -312,8 +387,15 @@ export function DiagnosticChat() {
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4">
+      {/* Main content - split view when panel is open */}
+      <main className="flex-1 flex">
+        {/* Chat section */}
+        <div
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center px-4 transition-all duration-500",
+            currentPanel ? "w-[45%]" : "w-full"
+          )}
+        >
         {!hasStarted ? (
           /* Initial state - centered prompt */
           <div className="w-full max-w-2xl space-y-8 text-center py-20">
@@ -395,7 +477,10 @@ export function DiagnosticChat() {
           </div>
         ) : (
           /* Conversation state - chat interface */
-          <div className="w-full max-w-2xl flex-1 flex flex-col py-6">
+          <div className={cn(
+            "w-full flex-1 flex flex-col py-6",
+            currentPanel ? "max-w-none px-6" : "max-w-2xl"
+          )}>
             {/* Messages */}
             <div className="flex-1 overflow-y-auto space-y-6 pb-6">
               {messages.map((message, index) => (
@@ -422,6 +507,13 @@ export function DiagnosticChat() {
                   </div>
                 </div>
               ))}
+
+              {/* Demo CTA in chat */}
+              {showDemoCTA && (
+                <div className="my-4">
+                  <DemoCTAPanel sessionId={sessionId || undefined} calendlyUrl={calendlyUrl || undefined} />
+                </div>
+              )}
 
               {/* Typing indicator */}
               {isLoading && (
@@ -495,6 +587,37 @@ export function DiagnosticChat() {
                 )}
               </button>
             </form>
+          </div>
+        )}
+        </div>
+
+        {/* Demo Dashboard Panel - slides in from right */}
+        {currentPanel && (
+          <div className="w-[55%] h-[calc(100vh-65px)] overflow-y-auto p-6 bg-black/30 border-l border-border/40 animate-in slide-in-from-right duration-500">
+            <div className="mb-5 flex justify-between items-center">
+              <div>
+                <div className="text-[10px] text-muted-foreground/50 uppercase tracking-widest mb-1">
+                  Example: Glow Aesthetics
+                </div>
+                <div className="text-[13px] text-muted-foreground">2 locations · $3.88M TTM</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-[11px] text-primary bg-primary/10 px-3 py-1.5 rounded-md border border-primary/20">
+                  Sample data
+                </div>
+                <button
+                  onClick={closePanel}
+                  className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {currentPanel === "cashflow" && <CashFlowPanel highlight={currentHighlight} />}
+            {currentPanel === "pnl" && <PnLPanel highlight={currentHighlight} />}
+            {currentPanel === "ar" && <ARPanel highlight={currentHighlight} />}
+            {currentPanel === "providers" && <ProvidersPanel highlight={currentHighlight} />}
           </div>
         )}
       </main>
