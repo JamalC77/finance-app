@@ -12,7 +12,9 @@ const ALLOWED_ROUTES = [
 ];
 
 // Route prefixes that are allowed (for dynamic routes)
-const ALLOWED_PREFIXES: string[] = [];
+const ALLOWED_PREFIXES: string[] = [
+  '/for/',  // Prospect intelligence pages
+];
 
 // Static file patterns to allow
 const STATIC_FILE_PATTERNS = [
