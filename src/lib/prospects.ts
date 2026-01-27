@@ -33,6 +33,19 @@ export interface CTAConfig {
   calendarLink: string;
 }
 
+export interface Estimate {
+  label: string;
+  value: string;
+  caveat?: string;
+  kicker?: string;
+}
+
+export interface PitchContent {
+  estimates: Estimate[];
+  whatWeBuild: string[];
+  closingLine: string;
+}
+
 export interface Prospect {
   slug: string;
   companyName: string;
@@ -44,6 +57,7 @@ export interface Prospect {
   intelCards: IntelCard[];
   painPoints: PainPoint[];
   botContext: BotContext;
+  pitch?: PitchContent;
   cta: CTAConfig;
 }
 
@@ -58,6 +72,7 @@ export interface ProspectPublic {
   employeeCount?: number;
   intelCards: IntelCard[];
   painPoints: Omit<PainPoint, 'opener'>[];
+  pitch?: PitchContent;
   cta: CTAConfig;
 }
 
@@ -105,6 +120,7 @@ export function getProspectPublicData(slug: string): ProspectPublic | null {
     employeeCount: prospect.employeeCount,
     intelCards: prospect.intelCards,
     painPoints: prospect.painPoints.map(({ opener, ...rest }) => rest),
+    pitch: prospect.pitch,
     cta: prospect.cta,
   };
 }

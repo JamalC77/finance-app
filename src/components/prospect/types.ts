@@ -22,6 +22,19 @@ export interface CTAConfig {
   calendarLink: string;
 }
 
+export interface Estimate {
+  label: string;
+  value: string;
+  caveat?: string;
+  kicker?: string;
+}
+
+export interface PitchContent {
+  estimates: Estimate[];
+  whatWeBuild: string[];
+  closingLine: string;
+}
+
 export interface ProspectPublic {
   slug: string;
   companyName: string;
@@ -32,6 +45,7 @@ export interface ProspectPublic {
   employeeCount?: number;
   intelCards: IntelCard[];
   painPoints: PainPoint[];
+  pitch?: PitchContent;
   cta: CTAConfig;
 }
 

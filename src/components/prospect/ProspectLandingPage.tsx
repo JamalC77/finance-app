@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ProspectHeader } from "./ProspectHeader";
 import { ProspectIntelSection } from "./ProspectIntelSection";
+import { ProspectEstimates } from "./ProspectEstimates";
 import { ProspectChat } from "./ProspectChat";
 import { ProspectCTA } from "./ProspectCTA";
 import type { ProspectPublic } from "./types";
@@ -105,6 +106,11 @@ export function ProspectLandingPage({ prospect }: ProspectLandingPageProps) {
 
       {/* Intel cards */}
       <ProspectIntelSection intelCards={prospect.intelCards} />
+
+      {/* Pitch estimates section */}
+      {prospect.pitch && (
+        <ProspectEstimates pitch={prospect.pitch} />
+      )}
 
       {/* Chat section */}
       <div className="flex-grow py-2">
