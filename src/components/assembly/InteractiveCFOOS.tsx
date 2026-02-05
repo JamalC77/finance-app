@@ -15,6 +15,7 @@ import { BacklogPipeline } from './BacklogPipeline';
 import { MonthlyTrend } from './MonthlyTrend';
 import { ScenarioEngine } from './ScenarioEngine';
 import { Commentary } from './Commentary';
+import { InlineDataCard } from './InlineDataCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -44,6 +45,8 @@ const GREETING = "I've assembled your dashboard. You're at $8.4M TTM with 7 acti
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  showComponent?: string | null;
+  showDetail?: string | null;
 }
 
 interface InteractiveCFOOSProps {
@@ -60,6 +63,8 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
   const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
   const [highlightedDetail, setHighlightedDetail] = useState<string | null>(null);
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>(INITIAL_PROMPTS);
+  const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'dashboard'>('chat');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -68,6 +73,15 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  // Mobile detection
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => setIsMobile(e.matches);
+    handleChange(mql);
+    mql.addEventListener('change', handleChange as (e: MediaQueryListEvent) => void);
+    return () => mql.removeEventListener('change', handleChange as (e: MediaQueryListEvent) => void);
+  }, []);
 
   const handleDashboardDirectives = useCallback((data: {
     showComponent: string | null;
@@ -78,11 +92,11 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
       setFocusView(data.focusView);
     }
 
-    if (data.showComponent) {
+    // On mobile chat tab: skip scroll/highlight (inline card handles it)
+    if (data.showComponent && (!isMobile || activeTab === 'dashboard')) {
       setHighlightedSection(data.showComponent);
       setHighlightedDetail(data.showDetail);
 
-      // Scroll to the section after a short delay
       setTimeout(() => {
         const ref = sectionRefs.current[data.showComponent!];
         if (ref) {
@@ -90,13 +104,12 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
         }
       }, 600);
 
-      // Clear highlight after 5 seconds
       setTimeout(() => {
         setHighlightedSection(null);
         setHighlightedDetail(null);
       }, 5000);
     }
-  }, []);
+  }, [isMobile, activeTab]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isTyping) return;
@@ -108,7 +121,6 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
     setIsTyping(true);
 
     try {
-      // Send full conversation history (minus the greeting which is hardcoded)
       const history = messages.slice(1).map((m) => ({
         role: m.role,
         content: m.content,
@@ -128,16 +140,19 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
       const data = await res.json();
 
       if (data.success && data.response) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.response }]);
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
+          content: data.response,
+          showComponent: data.showComponent,
+          showDetail: data.showDetail,
+        }]);
 
-        // Handle dashboard directives
         handleDashboardDirectives({
           showComponent: data.showComponent,
           showDetail: data.showDetail,
           focusView: data.focusView,
         });
 
-        // Update prompts
         if (data.suggestedPrompts?.length > 0) {
           setSuggestedPrompts(data.suggestedPrompts);
         }
@@ -162,332 +177,402 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
   const allowedComponents = VIEW_FILTER[focusView] || VIEW_FILTER.all;
   const visibleSections = sortedSections.filter((s) => allowedComponents.includes(s.component));
 
-  return (
-    <div style={{ display: 'flex', height: '100vh', background: tokens.colors.bg, fontFamily: tokens.fonts.body }}>
-      {/* ===== LEFT: CHAT PANEL (40%) ===== */}
-      <div
-        style={{
-          width: '40%',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRight: `1px solid ${tokens.colors.border}`,
-          height: '100vh',
-        }}
-      >
-        {/* Chat Header */}
-        <div
-          style={{
-            padding: `${tokens.spacing.lg} ${tokens.spacing.xl}`,
-            borderBottom: `1px solid ${tokens.colors.border}`,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: tokens.colors.text }}>
-              Summit Ridge Builders
-            </div>
-            <div style={{ fontSize: '12px', color: tokens.colors.muted, marginTop: '2px' }}>
-              AI CFO &middot; Feb 2026
-            </div>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: tokens.colors.goldDim,
-              padding: '4px 10px',
-              borderRadius: tokens.radii.sm,
-            }}
-          >
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: tokens.colors.green, animation: 'pulse 2s infinite' }} />
-            <span style={{ fontFamily: tokens.fonts.mono, fontSize: '11px', color: tokens.colors.gold, fontWeight: 600 }}>Live</span>
-          </div>
-        </div>
+  const showChat = !isMobile || activeTab === 'chat';
+  const showDashboard = !isMobile || activeTab === 'dashboard';
 
-        {/* Messages */}
-        <div
+  // --- Shared sub-components ---
+
+  const MobileTabBar = () => (
+    <div
+      style={{
+        display: 'flex',
+        borderBottom: `1px solid ${tokens.colors.border}`,
+        background: tokens.colors.bg,
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}
+    >
+      {(['chat', 'dashboard'] as const).map((tab) => (
+        <button
+          key={tab}
+          onClick={() => setActiveTab(tab)}
           style={{
             flex: 1,
-            overflowY: 'auto',
-            padding: tokens.spacing.xl,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: tokens.spacing.md,
+            padding: `${tokens.spacing.md} 0`,
+            background: 'none',
+            border: 'none',
+            borderBottom: `2px solid ${activeTab === tab ? tokens.colors.gold : 'transparent'}`,
+            color: activeTab === tab ? tokens.colors.gold : tokens.colors.muted,
+            fontFamily: tokens.fonts.body,
+            fontSize: '14px',
+            fontWeight: activeTab === tab ? 600 : 400,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
           }}
         >
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                animation: 'fadeSlideIn 0.3s ease both',
-              }}
-            >
-              <div
-                style={{
-                  maxWidth: '85%',
-                  fontSize: '14px',
-                  lineHeight: 1.6,
-                  ...(msg.role === 'user'
-                    ? {
-                        background: 'rgba(255,255,255,0.08)',
-                        borderRadius: '16px 16px 4px 16px',
-                        padding: '10px 16px',
-                        color: 'rgba(255,255,255,0.9)',
-                      }
-                    : {
-                        color: 'rgba(255,255,255,0.8)',
-                      }),
-                }}
-              >
-                {msg.content}
-              </div>
-            </div>
-          ))}
+          {tab === 'chat' ? 'Chat' : 'Dashboard'}
+        </button>
+      ))}
+    </div>
+  );
 
-          {isTyping && (
-            <div style={{ display: 'flex', gap: '4px', padding: '8px 0', animation: 'fadeSlideIn 0.3s ease both' }}>
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.4)',
-                    animation: `bounce 1.2s ease-in-out ${i * 150}ms infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
+  // --- Chat Panel ---
+  const chatPanel = (
+    <div
+      style={{
+        width: isMobile ? '100%' : '40%',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRight: isMobile ? 'none' : `1px solid ${tokens.colors.border}`,
+        height: isMobile ? 'calc(100dvh - 50px)' : '100vh',
+      }}
+    >
+      {/* Chat Header */}
+      <div
+        style={{
+          padding: `${tokens.spacing.lg} ${isMobile ? tokens.spacing.lg : tokens.spacing.xl}`,
+          borderBottom: `1px solid ${tokens.colors.border}`,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <div>
+          <div style={{ fontSize: isMobile ? '15px' : '16px', fontWeight: 700, color: tokens.colors.text }}>
+            Summit Ridge Builders
+          </div>
+          <div style={{ fontSize: '12px', color: tokens.colors.muted, marginTop: '2px' }}>
+            AI CFO &middot; Feb 2026
+          </div>
         </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: tokens.colors.goldDim,
+            padding: '4px 10px',
+            borderRadius: tokens.radii.sm,
+          }}
+        >
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: tokens.colors.green, animation: 'pulse 2s infinite' }} />
+          <span style={{ fontFamily: tokens.fonts.mono, fontSize: '11px', color: tokens.colors.gold, fontWeight: 600 }}>Live</span>
+        </div>
+      </div>
 
-        {/* Quick Prompts */}
-        {suggestedPrompts.length > 0 && !isTyping && (
+      {/* Messages */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: isMobile ? tokens.spacing.lg : tokens.spacing.xl,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: tokens.spacing.md,
+        }}
+      >
+        {messages.map((msg, i) => (
           <div
+            key={i}
             style={{
-              padding: `0 ${tokens.spacing.xl} ${tokens.spacing.md}`,
               display: 'flex',
-              flexWrap: 'wrap',
-              gap: tokens.spacing.sm,
+              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+              animation: 'fadeSlideIn 0.3s ease both',
             }}
           >
-            {suggestedPrompts.map((prompt, i) => (
-              <button
+            <div
+              style={{
+                maxWidth: isMobile ? '95%' : '85%',
+                fontSize: isMobile ? '13px' : '14px',
+                lineHeight: 1.6,
+                ...(msg.role === 'user'
+                  ? {
+                      background: 'rgba(255,255,255,0.08)',
+                      borderRadius: '16px 16px 4px 16px',
+                      padding: '10px 16px',
+                      color: 'rgba(255,255,255,0.9)',
+                    }
+                  : {
+                      color: 'rgba(255,255,255,0.8)',
+                    }),
+              }}
+            >
+              {msg.content}
+              {/* Inline data card on mobile */}
+              {isMobile && msg.role === 'assistant' && msg.showComponent && (
+                <InlineDataCard
+                  component={msg.showComponent}
+                  detail={msg.showDetail ?? null}
+                  config={config}
+                  onViewDashboard={() => {
+                    setActiveTab('dashboard');
+                    setTimeout(() => {
+                      handleDashboardDirectives({
+                        showComponent: msg.showComponent!,
+                        showDetail: msg.showDetail ?? null,
+                        focusView: null,
+                      });
+                    }, 100);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+
+        {isTyping && (
+          <div style={{ display: 'flex', gap: '4px', padding: '8px 0', animation: 'fadeSlideIn 0.3s ease both' }}>
+            {[0, 1, 2].map((i) => (
+              <div
                 key={i}
-                onClick={() => sendMessage(prompt)}
                 style={{
-                  background: 'transparent',
-                  border: `1px solid ${tokens.colors.border}`,
-                  color: tokens.colors.muted,
-                  padding: '8px 14px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontFamily: tokens.fonts.body,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.4)',
+                  animation: `bounce 1.2s ease-in-out ${i * 150}ms infinite`,
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = `${tokens.colors.gold}60`;
-                  e.currentTarget.style.color = tokens.colors.gold;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = tokens.colors.border;
-                  e.currentTarget.style.color = tokens.colors.muted;
-                }}
-              >
-                {prompt}
-              </button>
+              />
             ))}
           </div>
         )}
 
-        {/* Input */}
-        <div style={{ padding: `${tokens.spacing.md} ${tokens.spacing.xl} ${tokens.spacing.xl}` }}>
-          <form onSubmit={handleSubmit}>
-            <div
-              style={{
-                display: 'flex',
-                gap: tokens.spacing.sm,
-                background: 'rgba(255,255,255,0.03)',
-                border: `1px solid ${tokens.colors.border}`,
-                borderRadius: tokens.radii.lg,
-                padding: '4px 4px 4px 16px',
-              }}
-            >
-              <input
-                type="text"
-                placeholder="Ask about your numbers..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                disabled={isTyping}
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  fontSize: '14px',
-                  color: tokens.colors.text,
-                  fontFamily: tokens.fonts.body,
-                }}
-              />
-              <button
-                type="submit"
-                disabled={!inputValue.trim() || isTyping}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: tokens.radii.md,
-                  border: 'none',
-                  background: inputValue.trim() ? tokens.colors.gold : 'rgba(255,255,255,0.1)',
-                  color: inputValue.trim() ? tokens.colors.bg : 'rgba(255,255,255,0.3)',
-                  cursor: inputValue.trim() ? 'pointer' : 'default',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '16px',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                &#x2191;
-              </button>
-            </div>
-          </form>
-        </div>
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* ===== RIGHT: DASHBOARD PANEL (60%) ===== */}
-      <div
-        ref={dashboardRef}
-        style={{
-          width: '60%',
-          height: '100vh',
-          overflowY: 'auto',
-          background: `${tokens.colors.bg}`,
-        }}
-      >
-        {/* Dashboard Header */}
+      {/* Quick Prompts */}
+      {suggestedPrompts.length > 0 && !isTyping && (
         <div
           style={{
-            padding: `${tokens.spacing.lg} ${tokens.spacing.xl}`,
-            borderBottom: `1px solid ${tokens.colors.border}`,
+            padding: `0 ${isMobile ? tokens.spacing.lg : tokens.spacing.xl} ${tokens.spacing.md}`,
             display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: tokens.spacing.sm,
           }}
         >
-          <div>
-            <div style={{ fontSize: '10px', color: tokens.colors.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-              CFO OS Dashboard
-            </div>
-            <div style={{ fontSize: '13px', color: tokens.colors.muted }}>
-              Houston, TX &middot; Residential Construction &middot; {fmt(8400000)} TTM
-            </div>
-          </div>
+          {suggestedPrompts.map((prompt, i) => (
+            <button
+              key={i}
+              onClick={() => sendMessage(prompt)}
+              style={{
+                background: 'transparent',
+                border: `1px solid ${tokens.colors.border}`,
+                color: tokens.colors.muted,
+                padding: isMobile ? '6px 12px' : '8px 14px',
+                borderRadius: '20px',
+                fontSize: isMobile ? '11px' : '12px',
+                fontFamily: tokens.fonts.body,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = `${tokens.colors.gold}60`;
+                e.currentTarget.style.color = tokens.colors.gold;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = tokens.colors.border;
+                e.currentTarget.style.color = tokens.colors.muted;
+              }}
+            >
+              {prompt}
+            </button>
+          ))}
         </div>
+      )}
 
-        {/* Dashboard Content */}
-        <div style={{ padding: tokens.spacing.xl }}>
-          {/* Executive Summary */}
+      {/* Input */}
+      <div style={{ padding: `${tokens.spacing.md} ${isMobile ? tokens.spacing.lg : tokens.spacing.xl} ${tokens.spacing.xl}` }}>
+        <form onSubmit={handleSubmit}>
           <div
-            ref={(el) => { sectionRefs.current['KPIs'] = el; }}
             style={{
-              marginBottom: tokens.spacing.xl,
-              transition: 'all 0.4s ease',
-              ...(highlightedSection === 'KPIs' ? highlightStyle : {}),
+              display: 'flex',
+              gap: tokens.spacing.sm,
+              background: 'rgba(255,255,255,0.03)',
+              border: `1px solid ${tokens.colors.border}`,
+              borderRadius: tokens.radii.lg,
+              padding: '4px 4px 4px 16px',
             }}
           >
-            <p
+            <input
+              type="text"
+              placeholder="Ask about your numbers..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              disabled={isTyping}
               style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
                 fontSize: '14px',
-                color: tokens.colors.textSecondary,
-                lineHeight: 1.6,
-                marginBottom: tokens.spacing.lg,
-                padding: `${tokens.spacing.md} ${tokens.spacing.lg}`,
-                background: tokens.colors.surface,
-                border: `1px solid ${tokens.colors.border}`,
-                borderLeft: `3px solid ${tokens.colors.gold}`,
-                borderRadius: tokens.radii.md,
+                color: tokens.colors.text,
+                fontFamily: tokens.fonts.body,
               }}
-            >
-              {config.executive_summary.headline}
-            </p>
-            <div style={{ display: 'flex', gap: tokens.spacing.md, flexWrap: 'wrap' }}>
-              {config.executive_summary.kpis.map((kpi, i) => (
-                <KPICard key={i} {...kpi} />
-              ))}
-            </div>
-          </div>
-
-          {/* Alerts */}
-          {config.alerts.length > 0 && (
-            <div
-              ref={(el) => { sectionRefs.current['alerts'] = el; }}
+            />
+            <button
+              type="submit"
+              disabled={!inputValue.trim() || isTyping}
               style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: tokens.radii.md,
+                border: 'none',
+                background: inputValue.trim() ? tokens.colors.gold : 'rgba(255,255,255,0.1)',
+                color: inputValue.trim() ? tokens.colors.bg : 'rgba(255,255,255,0.3)',
+                cursor: inputValue.trim() ? 'pointer' : 'default',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: tokens.spacing.sm,
-                marginBottom: tokens.spacing.xl,
-                transition: 'all 0.4s ease',
-                ...(highlightedSection === 'alerts' ? highlightStyle : {}),
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
               }}
             >
-              {config.alerts.map((alert, i) => (
-                <AlertBanner key={i} {...alert} />
-              ))}
-            </div>
-          )}
+              &#x2191;
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 
-          {/* Sections */}
-          {visibleSections.map((section, i) => {
-            const Component = COMPONENT_MAP[section.component];
-            if (!Component) return null;
-
-            const isHighlighted = highlightedSection === section.component;
-            const props = { ...section.props };
-            if (isHighlighted && highlightedDetail) {
-              props.highlight = highlightedDetail;
-            }
-
-            return (
-              <div
-                key={section.id}
-                ref={(el) => { sectionRefs.current[section.component] = el; }}
-                style={{
-                  marginBottom: tokens.spacing.xl,
-                  animation: `fadeSlideIn 0.4s ease ${i * 0.08}s both`,
-                  transition: 'all 0.4s ease',
-                  borderRadius: tokens.radii.lg,
-                  ...(isHighlighted ? highlightStyle : {}),
-                }}
-              >
-                <SectionHeader title={section.title} badge={section.badge} />
-                <Component {...props} />
-              </div>
-            );
-          })}
+  // --- Dashboard Panel ---
+  const dashboardPanel = (
+    <div
+      ref={dashboardRef}
+      style={{
+        width: isMobile ? '100%' : '60%',
+        height: isMobile ? 'calc(100dvh - 50px)' : '100vh',
+        overflowY: 'auto',
+        background: tokens.colors.bg,
+      }}
+    >
+      {/* Dashboard Header */}
+      <div
+        style={{
+          padding: `${tokens.spacing.lg} ${isMobile ? tokens.spacing.lg : tokens.spacing.xl}`,
+          borderBottom: `1px solid ${tokens.colors.border}`,
+        }}
+      >
+        <div style={{ fontSize: '10px', color: tokens.colors.dim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+          CFO OS Dashboard
         </div>
-
-        {/* Footer */}
-        <div
-          style={{
-            borderTop: `1px solid ${tokens.colors.border}`,
-            padding: `${tokens.spacing.lg} ${tokens.spacing.xl}`,
-            textAlign: 'center',
-          }}
-        >
-          <span style={{ fontSize: '12px', color: tokens.colors.dim }}>
-            CFO OS &middot; The CFO Line
-          </span>
+        <div style={{ fontSize: '13px', color: tokens.colors.muted }}>
+          Houston, TX &middot; Residential Construction &middot; {fmt(8400000)} TTM
         </div>
       </div>
+
+      {/* Dashboard Content */}
+      <div style={{ padding: isMobile ? tokens.spacing.lg : tokens.spacing.xl }}>
+        {/* Executive Summary */}
+        <div
+          ref={(el) => { sectionRefs.current['KPIs'] = el; }}
+          style={{
+            marginBottom: tokens.spacing.xl,
+            transition: 'all 0.4s ease',
+            ...(highlightedSection === 'KPIs' ? highlightStyle : {}),
+          }}
+        >
+          <p
+            style={{
+              fontSize: isMobile ? '13px' : '14px',
+              color: tokens.colors.textSecondary,
+              lineHeight: 1.6,
+              marginBottom: tokens.spacing.lg,
+              padding: `${tokens.spacing.md} ${tokens.spacing.lg}`,
+              background: tokens.colors.surface,
+              border: `1px solid ${tokens.colors.border}`,
+              borderLeft: `3px solid ${tokens.colors.gold}`,
+              borderRadius: tokens.radii.md,
+            }}
+          >
+            {config.executive_summary.headline}
+          </p>
+          <div style={{ display: 'flex', gap: tokens.spacing.md, flexWrap: 'wrap' }}>
+            {config.executive_summary.kpis.map((kpi, i) => (
+              <KPICard key={i} {...kpi} />
+            ))}
+          </div>
+        </div>
+
+        {/* Alerts */}
+        {config.alerts.length > 0 && (
+          <div
+            ref={(el) => { sectionRefs.current['alerts'] = el; }}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: tokens.spacing.sm,
+              marginBottom: tokens.spacing.xl,
+              transition: 'all 0.4s ease',
+              ...(highlightedSection === 'alerts' ? highlightStyle : {}),
+            }}
+          >
+            {config.alerts.map((alert, i) => (
+              <AlertBanner key={i} {...alert} />
+            ))}
+          </div>
+        )}
+
+        {/* Sections */}
+        {visibleSections.map((section, i) => {
+          const Component = COMPONENT_MAP[section.component];
+          if (!Component) return null;
+
+          const isHighlighted = highlightedSection === section.component;
+          const props = { ...section.props };
+          if (isHighlighted && highlightedDetail) {
+            props.highlight = highlightedDetail;
+          }
+
+          return (
+            <div
+              key={section.id}
+              ref={(el) => { sectionRefs.current[section.component] = el; }}
+              style={{
+                marginBottom: tokens.spacing.xl,
+                animation: `fadeSlideIn 0.4s ease ${i * 0.08}s both`,
+                transition: 'all 0.4s ease',
+                borderRadius: tokens.radii.lg,
+                ...(isHighlighted ? highlightStyle : {}),
+              }}
+            >
+              <SectionHeader title={section.title} badge={section.badge} />
+              <Component {...props} />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          borderTop: `1px solid ${tokens.colors.border}`,
+          padding: `${tokens.spacing.lg} ${tokens.spacing.xl}`,
+          textAlign: 'center',
+        }}
+      >
+        <span style={{ fontSize: '12px', color: tokens.colors.dim }}>
+          CFO OS &middot; The CFO Line
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        height: '100dvh',
+        background: tokens.colors.bg,
+        fontFamily: tokens.fonts.body,
+      }}
+    >
+      {isMobile && <MobileTabBar />}
+      {showChat && chatPanel}
+      {showDashboard && dashboardPanel}
 
       {/* Animations */}
       <style>{`
