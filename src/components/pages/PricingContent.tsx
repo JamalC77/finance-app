@@ -1,103 +1,132 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ArrowRight, Calendar } from "lucide-react";
+import { Check, ArrowRight, Calendar, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tiers = [
   {
-    name: "Staff Accountant",
-    tagline: "Clean books, on time",
+    name: "Lite",
+    tagline: "Turn the lights on",
     price: "$2,500",
     period: "/mo",
+    description:
+      "AI connected to your systems. See your data clearly — often for the first time.",
     features: [
-      "Monthly bookkeeping & reconciliations",
-      "Close-ready books",
-      "Basic financial statements",
-      "Payroll coordination",
+      "All systems integrated into one place",
+      "13-week cash flow forecast",
+      "Conversational analytics — just ask it questions",
+      "Anomaly detection & cash flow alerts",
+      "Auto-generated dashboards",
+      "Accessible anywhere — mobile, desktop, conversational",
+      "Monthly 30-60 min review call",
+      "24/7 support",
     ],
     cta: "Get Started",
     highlighted: false,
+    ideal: "$1-5M revenue with existing staff",
   },
   {
-    name: "Fractional Controller",
-    tagline: "Close with confidence",
-    price: "$4,750",
+    name: "Pro",
+    tagline: "Your fractional CFO",
+    price: "$6,000",
     period: "/mo",
+    description:
+      "Everything in Lite plus deep, ongoing strategic partnership with a dedicated CFO.",
     features: [
-      "Everything in Staff Accountant",
-      "Owns the month-end close",
-      "Reporting pack & variance analysis",
-      "Systems & controls",
-      "Monthly review call",
+      "Everything in Lite",
+      "13-week cash forecast + working capital management",
+      "Service line / product line profitability analysis",
+      "Proactive insights & recommendations",
+      "Scenario modeling & strategic guidance",
+      "Dedicated CFO relationship",
+      "24/7 support",
     ],
     cta: "Get Started",
     highlighted: true,
-  },
-  {
-    name: "Fractional CFO",
-    tagline: "Strategic clarity",
-    price: "$7,000",
-    period: "/mo",
-    features: [
-      "Everything in Controller",
-      "Cash forecasting",
-      "Scenario modeling",
-      "Board pack prep",
-      "Strategic guidance",
-      "1-2 calls per month",
-    ],
-    cta: "Get Started",
-    highlighted: false,
+    ideal: "$3-15M revenue with structural complexity",
   },
 ];
 
-const addOns = [
-  { name: "AP Processing", price: "from $750/mo" },
-  { name: "AR Collections", price: "from $750/mo" },
-  { name: "Multi-Entity", price: "+50% per entity" },
-  { name: "Inventory Accounting", price: "Custom" },
+const expansionPackages = [
+  {
+    name: "Controller Package",
+    trigger: "Your data reveals your books need work",
+    includes: [
+      "Full accounting & monthly close",
+      "Final reporting",
+      "Business controls & compliance",
+    ],
+  },
+  {
+    name: "Integrated Tax Package",
+    trigger: "You want one team handling everything",
+    includes: [
+      "Business tax returns",
+      "Personal returns for owners",
+      "Ongoing tax planning",
+      "24/7 tax support",
+    ],
+  },
+  {
+    name: "Full CFO Package",
+    trigger: "You need a complete finance department",
+    includes: [
+      "Complete finance department outsourcing",
+      "1.2x the service of internal staff at a fraction of the cost",
+    ],
+  },
 ];
 
 const steps = [
   {
     number: "1",
-    title: "Start with a Diagnostic",
+    title: "Start with a Financial Diagnostic",
     description:
-      "We analyze your financials and deliver a CFO Brief with your top issues, cash analysis, and a 90-day roadmap.",
-    note: "$2,500, credited toward your first month.",
+      "We dive deep into your financials and surface leakage, trapped capital, margin problems, and cash flow issues. The findings typically exceed the fee.",
+    note: "$2,500 - $7,500 one-time. Self-funding guarantee. Credits toward onboarding if you start within 30 days.",
   },
   {
     number: "2",
-    title: "90-Day Implementation",
+    title: "Pick your tier",
     description:
-      "We set up systems, clean up history, and establish your reporting cadence.",
+      "Lite if you want AI-powered visibility into your numbers. Pro if you want a strategic CFO partner in your business.",
     note: null,
   },
   {
     number: "3",
-    title: "Ongoing Support",
+    title: "Expand as you need",
     description:
-      "Month-to-month after implementation. Scale up or down as you grow.",
+      "Most clients discover they need more once they can finally see their data. Controller services, tax, full finance department — we grow with you.",
     note: null,
   },
 ];
 
 const faqs = [
   {
-    question: "What's included in the 90-day implementation?",
+    question: "What are the three answers CFO OS gives me?",
     answer:
-      "Systems setup, historical cleanup, reporting framework, and process documentation. This is the foundation that makes ongoing support efficient.",
+      "13-week cash forecast and working capital management (will I make payroll?), conversational pocket analytics (ask your data anything), and service/product line profitability (which parts of my business actually make money?).",
+  },
+  {
+    question: "What's the Financial Diagnostic?",
+    answer:
+      "A deep dive into your financials that surfaces leakage, trapped capital, margin problems, and cash flow issues. The findings typically exceed the fee — it's self-funding. If you decide to work with us within 30 days, the fee credits toward your onboarding.",
+  },
+  {
+    question: "What's the difference between Lite and Pro?",
+    answer:
+      "Lite is the AI product — your data connected, visible, and accessible 24/7. Pro adds a dedicated fractional CFO who's actively in your business making strategic recommendations. Most Lite clients graduate to Pro once the data reveals what needs fixing.",
   },
   {
     question: "Can I cancel anytime?",
     answer:
-      "Yes, after the 90-day implementation period. Month-to-month after that with no long-term contracts.",
+      "Yes. Month-to-month after your initial onboarding period. No long-term contracts.",
   },
   {
-    question: "What if I need AP/AR management?",
+    question: "What systems do you integrate with?",
     answer:
-      "AP and AR processing are available as add-ons, priced based on your volume. We'll scope this during the diagnostic.",
+      "QuickBooks, bank accounts, payroll systems, and more. We build a relational data model across all your systems so everything talks to each other.",
   },
 ];
 
@@ -143,20 +172,64 @@ export function PricingContent() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-4xl text-center">
           <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-6xl font-medium text-foreground tracking-tight leading-tight">
-            Financial leadership
+            All your systems.
             <br />
-            <span className="italic text-foreground/70">that scales with you</span>
+            <span className="italic text-foreground/70">
+              Three answers that matter.
+            </span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Fractional finance teams for growing businesses. Cancel anytime.
+            We integrate every system into one place and give you the clarity to
+            make decisions with confidence. 24/7 support included.
           </p>
+        </div>
+      </section>
+
+      {/* The Three Answers */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="p-6 bg-muted/30 rounded-xl border border-border/50 text-center">
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
+                13-Week Cash Forecast
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Will I make payroll? When do I need to draw on my line?
+              </p>
+            </div>
+            <div className="p-6 bg-muted/30 rounded-xl border border-border/50 text-center">
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                <Zap className="h-5 w-5" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
+                Pocket Analytics
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Analytics so simple you can just ask it questions.
+              </p>
+            </div>
+            <div className="p-6 bg-muted/30 rounded-xl border border-border/50 text-center">
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+                <Check className="h-5 w-5" />
+              </div>
+              <h3 className="font-semibold text-foreground mb-2">
+                Line Profitability
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                Which parts of my business actually make money?
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Pricing Tiers */}
       <section className="py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-6">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-2 gap-6">
             {tiers.map((tier) => (
               <div
                 key={tier.name}
@@ -176,14 +249,18 @@ export function PricingContent() {
                   </p>
                 </div>
 
-                <div className="mb-6">
+                <div className="mb-4">
                   <span className="text-4xl font-semibold text-foreground">
                     {tier.price}
                   </span>
                   <span className="text-muted-foreground">{tier.period}</span>
                 </div>
 
-                <ul className="space-y-3 mb-8 flex-1">
+                <p className="text-sm text-muted-foreground mb-6">
+                  {tier.description}
+                </p>
+
+                <ul className="space-y-3 mb-6 flex-1">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -193,6 +270,10 @@ export function PricingContent() {
                     </li>
                   ))}
                 </ul>
+
+                <p className="text-xs text-muted-foreground/70 mb-4">
+                  Ideal for: {tier.ideal}
+                </p>
 
                 <Link
                   href="/"
@@ -241,56 +322,79 @@ export function PricingContent() {
         </div>
       </section>
 
-      {/* Add-Ons */}
+      {/* Expansion Packages */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-xl font-semibold text-foreground text-center mb-8">
-            Need more support?
+          <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-medium text-foreground text-center mb-4">
+            Expand as you grow
           </h2>
+          <p className="text-muted-foreground text-center mb-10 max-w-2xl mx-auto">
+            Once you can see your data, you&apos;ll know what needs fixing.
+            We&apos;re ready when you are.
+          </p>
 
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {addOns.map((addon) => (
+          <div className="grid md:grid-cols-3 gap-6">
+            {expansionPackages.map((pkg) => (
               <div
-                key={addon.name}
-                className="border border-border/50 rounded-xl p-4 text-center"
+                key={pkg.name}
+                className="border border-border/50 rounded-xl p-6"
               >
-                <p className="font-medium text-foreground">{addon.name}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {addon.price}
+                <h3 className="font-semibold text-foreground mb-2">
+                  {pkg.name}
+                </h3>
+                <p className="text-xs text-primary mb-4 italic">
+                  {pkg.trigger}
                 </p>
+                <ul className="space-y-2">
+                  {pkg.includes.map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <span className="text-sm text-muted-foreground">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What We're Not */}
+      {/* The Flywheel */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-3xl text-center">
           <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-medium text-foreground mb-4">
-            We're not your accounting department.
+            Every step is your idea, not ours.
           </h2>
           <p className="text-muted-foreground mb-8">
-            We're the strategic layer that makes your numbers work for you.
+            The data tells you what needs fixing. We just make it easy to say
+            yes.
           </p>
 
           <div className="grid sm:grid-cols-3 gap-6 text-left">
             <div className="p-6 bg-background rounded-xl border border-border/50">
-              <p className="font-medium text-foreground">Leadership, not labor</p>
+              <p className="font-medium text-foreground">
+                AI-powered visibility
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Strategic guidance, not just data entry
+                All your systems, one place, answers on demand
               </p>
             </div>
             <div className="p-6 bg-background rounded-xl border border-border/50">
-              <p className="font-medium text-foreground">AI-powered workflows</p>
+              <p className="font-medium text-foreground">
+                Human judgment where it counts
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Faster close, less manual work
+                Strategic guidance backed by real financial expertise
               </p>
             </div>
             <div className="p-6 bg-background rounded-xl border border-border/50">
-              <p className="font-medium text-foreground">One team that scales</p>
+              <p className="font-medium text-foreground">
+                One team that scales
+              </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Grow from Staff to CFO as you need
+                From analytics to full finance department — all under one roof
               </p>
             </div>
           </div>
@@ -301,7 +405,7 @@ export function PricingContent() {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-2xl text-center">
           <h2 className="font-[family-name:var(--font-playfair)] text-3xl md:text-4xl font-medium text-foreground mb-4">
-            Ready to get clarity on your numbers?
+            Ready to see your numbers clearly?
           </h2>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
@@ -321,7 +425,8 @@ export function PricingContent() {
           </div>
 
           <p className="text-sm text-muted-foreground mt-4">
-            $2,500, credited toward your first month
+            $2,500 - $7,500 one-time. Self-funding guarantee. Credits toward
+            onboarding.
           </p>
         </div>
       </section>
@@ -353,7 +458,8 @@ export function PricingContent() {
       <footer className="py-8 px-4 border-t border-border/40">
         <div className="container mx-auto max-w-6xl flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} The CFO Line. All rights reserved.
+            &copy; {new Date().getFullYear()} The CFO Line. All rights
+            reserved.
           </p>
           <div className="flex gap-6">
             <Link
