@@ -33,10 +33,10 @@ const VIEW_FILTER: Record<string, string[]> = {
 };
 
 const INITIAL_PROMPTS = [
+  'Give me the CFO summary',
   'Why is Memorial Renovation bleeding margin?',
   'Show me the cash danger zones',
   'Which jobs are actually on track?',
-  'What should I be worried about right now?',
   'Run a worst-case scenario',
 ];
 
