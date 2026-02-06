@@ -298,7 +298,12 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
                     }),
               }}
             >
-              {msg.content}
+              {msg.content.split('\n').map((line, j) => (
+                <span key={j}>
+                  {j > 0 && <br />}
+                  {line}
+                </span>
+              ))}
               {/* Inline data card on mobile */}
               {isMobile && msg.role === 'assistant' && msg.showComponent && (
                 <InlineDataCard
