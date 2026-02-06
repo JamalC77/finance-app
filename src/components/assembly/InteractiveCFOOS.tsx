@@ -40,7 +40,7 @@ const INITIAL_PROMPTS = [
   'Run a worst-case scenario',
 ];
 
-const GREETING = "I've assembled your dashboard. You're at $8.4M TTM with 7 active jobs and 7.2 months of visibility. Three things jump out: Memorial Renovation is bleeding margin at -3.5pp variance, your W3 cash dips are a pattern, and $165K is under-billed across 5 jobs. What do you want to dig into?";
+const GREETING = "You're growing at 14.7% year-over-year and profitable, but two jobs are bleeding margin and your cash gets tight three times in the next 12 weeks.\n\nThe big one: Memorial Renovation is down to 6.5% margin on a 10% bid — $68K in change orders the client hasn't signed. That needs a meeting this week.\n\nYou've also done $165K of work across 5 jobs that you haven't billed for yet. That's your cash sitting in someone else's pocket.\n\nWhat do you want to dig into?";
 
 interface Message {
   role: 'user' | 'assistant';
