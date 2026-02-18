@@ -151,11 +151,11 @@ export function InteractiveDemo() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white flex">
+    <div className="min-h-[100dvh] bg-background text-white flex">
       {/* Conversation Panel — hidden on mobile when dashboard is open */}
       <div
         className={cn(
-          "flex-col h-screen transition-all duration-500",
+          "flex-col h-[100dvh] md:transition-[width,border] md:duration-500",
           currentPanel
             ? "hidden md:flex md:w-[45%] md:border-r md:border-white/[0.06]"
             : "flex w-full"
@@ -199,7 +199,7 @@ export function InteractiveDemo() {
         {/* Messages Area */}
         <div
           className={cn(
-            "flex-1 overflow-y-auto px-8 py-8 flex flex-col",
+            "flex-1 overflow-y-auto overscroll-contain px-8 py-8 flex flex-col",
             conversationStarted ? "justify-start" : "justify-center"
           )}
         >
@@ -276,7 +276,7 @@ export function InteractiveDemo() {
         )}
 
         {/* Input */}
-        <div className="px-8 pb-8 pt-4">
+        <div className="px-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-4">
           <form onSubmit={handleInputSubmit}>
             <div className="flex gap-3 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-1">
               <input
@@ -305,7 +305,7 @@ export function InteractiveDemo() {
 
       {/* Dashboard Panel */}
       {currentPanel && (
-        <div className="w-full md:w-[55%] h-screen overflow-y-auto p-6 bg-background md:bg-black/30 animate-in slide-in-from-right duration-500">
+        <div className="w-full md:w-[55%] h-[100dvh] overflow-y-auto overscroll-contain p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-background md:bg-black/30 animate-in slide-in-from-right duration-500">
           <div className="mb-5 flex justify-between items-center">
             <div>
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">
