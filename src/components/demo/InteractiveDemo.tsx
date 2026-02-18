@@ -156,7 +156,7 @@ export function InteractiveDemo() {
       <div
         className={cn(
           "flex flex-col h-screen transition-all duration-500 border-r border-white/[0.06]",
-          currentPanel ? "w-[45%]" : "w-full"
+          currentPanel ? "w-full md:w-[45%]" : "w-full"
         )}
       >
         {/* Header */}
@@ -303,16 +303,24 @@ export function InteractiveDemo() {
 
       {/* Dashboard Panel */}
       {currentPanel && (
-        <div className="w-[55%] h-screen overflow-y-auto p-6 bg-black/30 animate-in slide-in-from-right duration-500">
+        <div className="fixed inset-0 z-50 md:relative md:z-auto w-full md:w-[55%] h-screen overflow-y-auto p-6 bg-background md:bg-black/30 animate-in slide-in-from-right duration-500">
           <div className="mb-5 flex justify-between items-center">
             <div>
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">
-                Demo: Glow Aesthetics
+                Example: Glow Aesthetics
               </div>
               <div className="text-[13px] text-white/50">2 locations · $3.88M TTM</div>
             </div>
-            <div className="text-[11px] text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-md border border-amber-500/20">
-              Sample data
+            <div className="flex items-center gap-3">
+              <div className="text-[11px] text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-md border border-amber-500/20">
+                Sample data
+              </div>
+              <button
+                onClick={() => { setCurrentPanel(null); setCurrentHighlight(null); }}
+                className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.08] text-white/40 hover:text-white/80 transition-colors"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
