@@ -152,11 +152,13 @@ export function InteractiveDemo() {
 
   return (
     <div className="min-h-screen bg-background text-white flex">
-      {/* Conversation Panel */}
+      {/* Conversation Panel — hidden on mobile when dashboard is open */}
       <div
         className={cn(
-          "flex flex-col h-screen transition-all duration-500 border-r border-white/[0.06]",
-          currentPanel ? "w-full md:w-[45%]" : "w-full"
+          "flex-col h-screen transition-all duration-500",
+          currentPanel
+            ? "hidden md:flex md:w-[45%] md:border-r md:border-white/[0.06]"
+            : "flex w-full"
         )}
       >
         {/* Header */}
@@ -303,7 +305,7 @@ export function InteractiveDemo() {
 
       {/* Dashboard Panel */}
       {currentPanel && (
-        <div className="fixed inset-0 z-50 md:relative md:z-auto w-full md:w-[55%] h-screen overflow-y-auto p-6 bg-background md:bg-black/30 animate-in slide-in-from-right duration-500">
+        <div className="w-full md:w-[55%] h-screen overflow-y-auto p-6 bg-background md:bg-black/30 animate-in slide-in-from-right duration-500">
           <div className="mb-5 flex justify-between items-center">
             <div>
               <div className="text-[10px] text-white/30 uppercase tracking-widest mb-1">
@@ -317,7 +319,7 @@ export function InteractiveDemo() {
               </div>
               <button
                 onClick={() => { setCurrentPanel(null); setCurrentHighlight(null); }}
-                className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.08] text-white/40 hover:text-white/80 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-white/[0.08] text-white/40 hover:text-white/80 transition-colors md:hidden"
               >
                 ✕
               </button>
