@@ -328,9 +328,66 @@
     @apply backdrop-blur-md;
     background: hsl(var(--card) / 0.8);
   }
-  
+
   .dark .glass {
     background: hsl(var(--card) / 0.6);
+  }
+
+  /* Score card floating animation */
+  .score-card-float {
+    animation: scoreFloat 6s ease-in-out infinite;
+  }
+
+  @keyframes scoreFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+
+  /* Animated glow behind score card */
+  .score-glow {
+    background: radial-gradient(
+      ellipse at center,
+      hsl(221 83% 53% / 0.08) 0%,
+      hsl(263 70% 50% / 0.04) 40%,
+      transparent 70%
+    );
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* Score bar fill animation */
+  .score-bar-fill {
+    width: 0;
+    animation: barFill 1s ease-out forwards;
+  }
+
+  @keyframes barFill {
+    from { width: 0; }
+    to { width: var(--bar-width); }
+  }
+
+  /* Score number entrance */
+  .score-number-enter {
+    animation: numberEnter 0.8s ease-out forwards;
+  }
+
+  @keyframes numberEnter {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Hero content fade in */
+  .hero-fade-in {
+    animation: heroFadeIn 0.8s ease-out forwards;
+  }
+
+  @keyframes heroFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 

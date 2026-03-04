@@ -49,7 +49,7 @@ export function EmailCaptureForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-md">
+    <form onSubmit={handleSubmit} className="w-full max-w-lg">
       <div className="flex flex-col sm:flex-row gap-2.5">
         <input
           type="email"
@@ -58,12 +58,12 @@ export function EmailCaptureForm() {
           placeholder="you@company.com"
           required
           disabled={loading}
-          className="flex-1 px-4 py-2.5 rounded-lg border border-border/60 bg-background/80 text-foreground placeholder:text-muted-foreground/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+          className="flex-1 px-4 py-3 rounded-lg border border-border/60 bg-background/80 text-foreground placeholder:text-muted-foreground/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap btn-shine"
+          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 whitespace-nowrap btn-shine"
         >
           {loading ? (
             <>
