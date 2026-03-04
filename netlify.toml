@@ -5,6 +5,10 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Auto-purge CDN cache after every deploy so stale HTML is never served
+[[plugins]]
+  package = "./netlify/plugins/cache-purge"
+
 [[redirects]]
   from = "/api-connectivity-test"
   to = "/api-test"
