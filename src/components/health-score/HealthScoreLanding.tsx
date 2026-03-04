@@ -19,27 +19,27 @@ export function HealthScoreLanding() {
           <h2 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-medium text-foreground text-center mb-10">
             Three steps. Two minutes. Zero cost.
           </h2>
-          <div className="flex items-center justify-between max-w-lg mx-auto">
+          <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-start max-w-lg mx-auto">
             {[
               { num: "1", label: "Enter your email" },
               { num: "2", label: "Connect QuickBooks" },
               { num: "3", label: "Get your report" },
             ].map((step, i) => (
-              <div key={step.num} className="flex items-center gap-0">
-                <div className="flex flex-col items-center gap-2.5">
+              <>
+                <div key={step.num} className="flex flex-col items-center gap-2.5">
                   <div className="w-11 h-11 rounded-full border-2 border-primary/30 text-primary flex items-center justify-center text-sm font-bold bg-primary/5">
                     {step.num}
                   </div>
-                  <span className="text-sm text-muted-foreground font-medium">
+                  <span className="text-sm text-muted-foreground font-medium text-center">
                     {step.label}
                   </span>
                 </div>
                 {i < 2 && (
-                  <div className="w-16 flex items-center justify-center -mt-5 mx-3">
-                    <div className="w-full h-px bg-primary/20" />
+                  <div className="flex items-center h-11 px-2">
+                    <div className="w-12 h-px bg-primary/20" />
                   </div>
                 )}
-              </div>
+              </>
             ))}
           </div>
         </div>
