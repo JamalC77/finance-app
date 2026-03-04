@@ -62,10 +62,10 @@ interface Message {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const INITIAL_QUICK_PROMPTS = [
-  "Cash feels tight even though we're growing",
+  "I'm worried about our cash runway",
   "I can't tell which customers are actually profitable",
   "I'm not sure we can afford our next hire",
-  "I'm worried about our cash runway",
+  "Cash feels tight even though we're growing",
 ];
 
 // Generate a unique session ID (new session on every page load)
