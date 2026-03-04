@@ -110,10 +110,10 @@ export function HeroSection() {
               </span>
             </div>
 
-            <h1 className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl md:text-[4.25rem] font-medium text-foreground tracking-tight leading-[1.08]">
+            <h1 className="font-[family-name:var(--font-playfair)] text-5xl sm:text-6xl md:text-[4.25rem] font-medium text-foreground tracking-tight leading-[1.2]">
               Is your business
               <br />
-              <span className="italic hero-gradient-text">
+              <span className="italic hero-gradient-text inline-block pb-1">
                 financially healthy?
               </span>
             </h1>
