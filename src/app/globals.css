@@ -391,14 +391,14 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Rainbow gradient text for hero headline */
+  /* Green gradient text for hero headline — profit/money feel */
   .hero-gradient-text {
     background: linear-gradient(
       135deg,
-      hsl(280 70% 65%) 0%,
-      hsl(200 80% 60%) 35%,
-      hsl(160 70% 55%) 65%,
-      hsl(140 60% 55%) 100%
+      hsl(155 60% 50%) 0%,
+      hsl(150 65% 45%) 40%,
+      hsl(145 55% 55%) 70%,
+      hsl(160 60% 40%) 100%
     );
     -webkit-background-clip: text;
     background-clip: text;

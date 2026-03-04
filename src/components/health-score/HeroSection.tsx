@@ -31,22 +31,20 @@ function ScorePreview() {
       <div className="relative rounded-2xl border border-white/[0.08] bg-[hsl(222_47%_8%/0.9)] backdrop-blur-sm shadow-2xl overflow-hidden">
         {/* Main content */}
         <div className="p-7 pb-5">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <div className="text-[11px] text-slate-500 uppercase tracking-[0.25em] mb-2 font-medium">
-                Health Score
-              </div>
-              <div className="flex items-baseline gap-2.5">
-                <span className="text-7xl font-bold text-yellow-500 score-number-enter tracking-tight">
-                  54
-                </span>
-                <span className="text-lg text-slate-600 font-light">
-                  / 100
-                </span>
-              </div>
+          <div className="mb-6">
+            <div className="text-[11px] text-slate-500 uppercase tracking-[0.25em] mb-2 font-medium">
+              Health Score
             </div>
-            <div className="w-12 h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mt-1">
-              <span className="text-xl font-bold text-yellow-500">C</span>
+            <div className="flex items-center gap-3">
+              <span className="text-7xl font-bold text-yellow-500 score-number-enter tracking-tight">
+                54
+              </span>
+              <span className="text-lg text-slate-600 font-light">
+                / 100
+              </span>
+              <div className="ml-auto w-11 h-11 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
+                <span className="text-lg font-bold text-yellow-500">C</span>
+              </div>
             </div>
           </div>
 
@@ -84,8 +82,8 @@ function ScorePreview() {
         </div>
 
         {/* Sample badge */}
-        <div className="absolute top-4 right-5 px-3 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider text-slate-500 border border-white/[0.08] bg-white/[0.04]">
-          Sample
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider text-slate-500 border border-white/[0.08] bg-[hsl(222_47%_10%)]">
+          Sample Report
         </div>
       </div>
     </div>
