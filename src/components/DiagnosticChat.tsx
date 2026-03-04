@@ -65,7 +65,7 @@ const INITIAL_QUICK_PROMPTS = [
   "Cash feels tight even though we're growing",
   "I can't tell which customers are actually profitable",
   "I'm not sure we can afford our next hire",
-  "I don't trust my numbers",
+  "I'm worried about our cash runway",
 ];
 
 // Generate a unique session ID (new session on every page load)
