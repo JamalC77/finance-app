@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { Eye } from "lucide-react";
 import { EmailCaptureForm } from "./EmailCaptureForm";
 
 export function HeroSection() {
@@ -20,6 +22,16 @@ export function HeroSection() {
 
         <div className="mt-10">
           <EmailCaptureForm />
+        </div>
+
+        <div className="mt-6">
+          <Link
+            href="/health-score/example"
+            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Eye className="h-4 w-4" />
+            Show me an example
+          </Link>
         </div>
       </div>
     </section>
