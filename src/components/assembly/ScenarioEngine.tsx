@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { tokens, fmt, pct } from '@/lib/assemblyTokens';
 import {
   LineChart,
@@ -26,6 +26,7 @@ interface ScenarioEngineProps {
     margin_change: number;
     delay_weeks: number;
   };
+  onForecastChange?: (forecast: Array<{ week: string; balance: number }>) => void;
 }
 
 function Slider({ label, value, min, max, step, unit, onChange }: {
@@ -95,7 +96,7 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function ScenarioEngine({ base_revenue, base_margin, base_forecast, defaults }: ScenarioEngineProps) {
+export function ScenarioEngine({ base_revenue, base_margin, base_forecast, defaults, onForecastChange }: ScenarioEngineProps) {
   const [revenueChange, setRevenueChange] = useState(defaults.revenue_change);
   const [marginChange, setMarginChange] = useState(defaults.margin_change);
   const [delayWeeks, setDelayWeeks] = useState(defaults.delay_weeks);
@@ -117,6 +118,15 @@ export function ScenarioEngine({ base_revenue, base_margin, base_forecast, defau
       };
     });
   }, [base_forecast, revenueChange, marginChange, delayWeeks]);
+
+  useEffect(() => {
+    if (!onForecastChange) return;
+    if (revenueChange !== 0 || marginChange !== 0 || delayWeeks !== 0) {
+      onForecastChange(scenarioData.map(d => ({ week: d.week, balance: d.scenario })));
+    } else {
+      onForecastChange([]);
+    }
+  }, [scenarioData, onForecastChange, revenueChange, marginChange, delayWeeks]);
 
   const scenarioRevenue = base_revenue * (1 + revenueChange / 100);
   const scenarioMargin = base_margin + marginChange / 100;

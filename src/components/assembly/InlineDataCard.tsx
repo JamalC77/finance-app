@@ -308,10 +308,66 @@ function AlertsCard({ config, onViewDashboard }: { config: AssemblyConfig; onVie
   );
 }
 
+// --- Health Verdict Inline Card ---
+
+function HealthVerdictInlineCard({ config, onViewDashboard }: { config: AssemblyConfig; onViewDashboard?: () => void }) {
+  const v = config.health_verdict;
+  if (!v) return null;
+  const statusLabels = { green: 'Healthy', yellow: 'Watch', red: 'Act Now' };
+  return (
+    <div style={cardStyle}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: tokens.spacing.sm }}>
+        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: statusColor(v.status) }} />
+        <span style={{ fontSize: '11px', fontWeight: 700, color: statusColor(v.status), textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          {statusLabels[v.status]}
+        </span>
+      </div>
+      <div style={{ fontWeight: 600, color: tokens.colors.text, fontSize: '14px', marginBottom: '4px' }}>{v.headline}</div>
+      <div style={{ fontSize: '12px', color: tokens.colors.muted, marginBottom: tokens.spacing.sm }}>{v.sub_line}</div>
+      {v.priority_actions.map((a, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 0' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: a.severity === 'critical' ? tokens.colors.red : tokens.colors.yellow, flexShrink: 0 }} />
+          <span style={{ fontSize: '12px', color: tokens.colors.text, flex: 1 }}>{a.headline}</span>
+          <span style={{ fontFamily: tokens.fonts.mono, fontSize: '11px', color: tokens.colors.gold, flexShrink: 0 }}>{a.dollar_impact}</span>
+        </div>
+      ))}
+      <ViewLink onViewDashboard={onViewDashboard} />
+    </div>
+  );
+}
+
+// --- Runway Inline Card ---
+
+function RunwayInlineCard({ config, onViewDashboard }: { config: AssemblyConfig; onViewDashboard?: () => void }) {
+  const r = config.runway;
+  if (!r) return null;
+  return (
+    <div style={cardStyle}>
+      <div style={{ fontWeight: 600, color: tokens.colors.text, marginBottom: tokens.spacing.sm }}>Cash Runway</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: tokens.spacing.sm }}>
+        <MetricCell label="Runway" value={r.runway_label} color={statusColor(r.status)} />
+        <MetricCell label="Min Balance" value={fmt(r.min_balance)} color={r.min_balance < r.safety_threshold ? tokens.colors.red : tokens.colors.yellow} />
+        <MetricCell label="Monthly Burn" value={fmt(r.monthly_burn)} />
+        <MetricCell label="Safety Floor" value={fmt(r.safety_threshold)} />
+      </div>
+      {r.danger_weeks.length > 0 && (
+        <div style={{ marginTop: tokens.spacing.sm, fontSize: '12px', color: tokens.colors.red }}>
+          Danger: {r.danger_weeks.join(', ')}
+        </div>
+      )}
+      <ViewLink onViewDashboard={onViewDashboard} />
+    </div>
+  );
+}
+
 // --- Main export ---
 
 export function InlineDataCard({ component, detail, config, onViewDashboard }: InlineDataCardProps) {
   switch (component) {
+    case 'HealthVerdict':
+      return <HealthVerdictInlineCard config={config} onViewDashboard={onViewDashboard} />;
+    case 'RunwayCard':
+      return <RunwayInlineCard config={config} onViewDashboard={onViewDashboard} />;
     case 'JobMarginTracker':
       return <JobCard config={config} detail={detail} onViewDashboard={onViewDashboard} />;
     case 'CashFlowTiming':

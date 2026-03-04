@@ -51,7 +51,46 @@ export interface ExecutiveSummary {
   kpis: KPIConfig[];
 }
 
+export interface PriorityAction {
+  id: string;
+  headline: string;
+  detail: string;
+  dollar_impact: string;
+  action: string;
+  severity: 'critical' | 'warning' | 'info';
+  linked_section?: string;
+  linked_detail?: string;
+  chat_prompt?: string;
+}
+
+export interface HealthVerdict {
+  status: Status;
+  headline: string;
+  sub_line: string;
+  priority_actions: PriorityAction[];
+}
+
+export interface RunwayWeek {
+  week: string;
+  balance: number;
+  is_danger: boolean;
+}
+
+export interface RunwayConfig {
+  runway_weeks: number;
+  runway_label: string;
+  status: Status;
+  safety_threshold: number;
+  monthly_burn: number;
+  min_balance: number;
+  min_balance_week: string;
+  danger_weeks: string[];
+  forecast: RunwayWeek[];
+}
+
 export interface AssemblyConfig {
+  health_verdict?: HealthVerdict;
+  runway?: RunwayConfig;
   executive_summary: ExecutiveSummary;
   alerts: AlertConfig[];
   sections: SectionConfig[];

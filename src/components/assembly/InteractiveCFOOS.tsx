@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { tokens, fmt } from '@/lib/assemblyTokens';
 import type { AssemblyConfig } from '@/lib/types/assemblyConfig';
 
+import type { RunwayWeek } from '@/lib/types/assemblyConfig';
 import { KPICard } from './KPICard';
 import { AlertBanner } from './AlertBanner';
 import { SectionHeader } from './SectionHeader';
@@ -16,12 +17,15 @@ import { MonthlyTrend } from './MonthlyTrend';
 import { ScenarioEngine } from './ScenarioEngine';
 import { Commentary } from './Commentary';
 import { InlineDataCard } from './InlineDataCard';
+import { HealthVerdict } from './HealthVerdict';
+import { RunwayCard } from './RunwayCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 const COMPONENT_MAP: Record<string, React.ComponentType<any>> = {
   KPICard, FlashPNL, JobMarginTracker, CashFlowTiming,
   WIPSnapshot, BacklogPipeline, MonthlyTrend, ScenarioEngine, Commentary,
+  HealthVerdict, RunwayCard,
 };
 
 const VIEW_FILTER: Record<string, string[]> = {
@@ -65,6 +69,7 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>(INITIAL_PROMPTS);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'dashboard'>('chat');
+  const [scenarioRunwayForecast, setScenarioRunwayForecast] = useState<RunwayWeek[] | undefined>(undefined);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -470,15 +475,33 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
 
       {/* Dashboard Content */}
       <div style={{ padding: isMobile ? tokens.spacing.lg : tokens.spacing.xl }}>
-        {/* Executive Summary */}
-        <div
-          ref={(el) => { sectionRefs.current['KPIs'] = el; }}
-          style={{
-            marginBottom: tokens.spacing.xl,
-            transition: 'all 0.4s ease',
-            ...(highlightedSection === 'KPIs' ? highlightStyle : {}),
-          }}
-        >
+        {/* Health Verdict */}
+        {config.health_verdict ? (
+          <div
+            ref={(el) => { sectionRefs.current['HealthVerdict'] = el; }}
+            style={{
+              marginBottom: tokens.spacing.lg,
+              transition: 'all 0.4s ease',
+              borderRadius: tokens.radii.lg,
+              ...(highlightedSection === 'HealthVerdict' ? highlightStyle : {}),
+            }}
+          >
+            <HealthVerdict
+              {...config.health_verdict}
+              onNavigateToSection={(component, detail) => {
+                handleDashboardDirectives({
+                  showComponent: component,
+                  showDetail: detail || null,
+                  focusView: null,
+                });
+              }}
+              onSendChatPrompt={(prompt) => {
+                if (isMobile) setActiveTab('chat');
+                sendMessage(prompt);
+              }}
+            />
+          </div>
+        ) : (
           <p
             style={{
               fontSize: isMobile ? '13px' : '14px',
@@ -494,12 +517,42 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
           >
             {config.executive_summary.headline}
           </p>
+        )}
+
+        {/* Executive KPIs */}
+        <div
+          ref={(el) => { sectionRefs.current['KPIs'] = el; }}
+          style={{
+            marginBottom: tokens.spacing.xl,
+            transition: 'all 0.4s ease',
+            ...(highlightedSection === 'KPIs' ? highlightStyle : {}),
+          }}
+        >
           <div style={{ display: 'flex', gap: tokens.spacing.md, flexWrap: 'wrap' }}>
             {config.executive_summary.kpis.map((kpi, i) => (
               <KPICard key={i} {...kpi} />
             ))}
           </div>
         </div>
+
+        {/* Cash Runway */}
+        {config.runway && (
+          <div
+            ref={(el) => { sectionRefs.current['RunwayCard'] = el; }}
+            style={{
+              marginBottom: tokens.spacing.xl,
+              transition: 'all 0.4s ease',
+              borderRadius: tokens.radii.lg,
+              ...(highlightedSection === 'RunwayCard' ? highlightStyle : {}),
+            }}
+          >
+            <SectionHeader title="Cash Runway" badge={config.runway.runway_label} />
+            <RunwayCard
+              {...config.runway}
+              scenarioForecast={scenarioRunwayForecast}
+            />
+          </div>
+        )}
 
         {/* Alerts */}
         {config.alerts.length > 0 && (
@@ -529,6 +582,20 @@ export function InteractiveCFOOS({ config }: InteractiveCFOOSProps) {
           const props = { ...section.props };
           if (isHighlighted && highlightedDetail) {
             props.highlight = highlightedDetail;
+          }
+          if (section.component === 'ScenarioEngine' && config.runway) {
+            props.onForecastChange = (newForecast: Array<{ week: string; balance: number }>) => {
+              if (newForecast.length === 0) {
+                setScenarioRunwayForecast(undefined);
+              } else {
+                const threshold = config.runway!.safety_threshold + config.runway!.monthly_burn;
+                setScenarioRunwayForecast(newForecast.map(f => ({
+                  week: f.week,
+                  balance: f.balance,
+                  is_danger: f.balance < threshold,
+                })));
+              }
+            };
           }
 
           return (
