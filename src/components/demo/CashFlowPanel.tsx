@@ -56,7 +56,7 @@ export function CashFlowPanel({ highlight }: CashFlowPanelProps) {
           highlighted={highlight === "conversion"}
         />
         <DemoMetricCard label="Operating Cash" value="$98K" subtext="June" trend={12} />
-        <DemoMetricCard label="Runway" value="4.2 mo" subtext="at current burn" />
+        <DemoMetricCard label="Runway" value="4.2 mo" subtext="at current burn" alert highlighted={highlight === "runway"} />
       </div>
 
       <div

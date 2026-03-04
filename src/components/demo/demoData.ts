@@ -57,4 +57,4 @@ export const serviceBreakdown = [
 ];
 
 export type PanelType = 'cashflow' | 'pnl' | 'ar' | 'providers' | null;
-export type HighlightType = 'janfeb' | 'conversion' | 'metrics' | 'margin' | 'services' | 'aging' | 'utilization' | 'drpark' | null;
+export type HighlightType = 'janfeb' | 'conversion' | 'runway' | 'metrics' | 'margin' | 'services' | 'aging' | 'utilization' | 'drpark' | null;

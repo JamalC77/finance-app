@@ -178,10 +178,10 @@ export function InteractiveDemo() {
                 About Us
               </Link>
               <Link
-                href="/pricing"
+                href="/chat"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Pricing
+                Talk to a CFO
               </Link>
             </nav>
           </div>

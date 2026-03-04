@@ -22,12 +22,61 @@ export interface Response {
 export const conversationFlows = {
   initial: {
     prompts: [
+      { id: 'runway', label: "I'm worried about our cash runway" },
       { id: 'cash', label: "Cash is always tight" },
-      { id: 'trust', label: "I don't trust my numbers" },
       { id: 'profitable', label: "Not sure we're profitable" },
     ] as Prompt[]
   },
   responses: {
+    runway: {
+      messages: [
+        "Cash runway is the #1 thing that kills growing businesses. You can be profitable on paper and still run out of cash.",
+        "Let me show you what runway looks like for a real business..."
+      ],
+      showPanel: 'cashflow' as PanelType,
+      highlight: 'runway' as HighlightType,
+      followUp: {
+        delay: 2000,
+        message: "This business has 4.2 months of runway at its current burn rate. That sounds okay — until you realize one bad quarter or a delayed collection cycle could cut that in half. Do you know yours?",
+        nextPrompts: [
+          { id: 'runway_no', label: "No, and that scares me" },
+          { id: 'runway_short', label: "Ours might be shorter" },
+          { id: 'cash', label: "Cash is always tight too" },
+        ]
+      }
+    },
+    runway_no: {
+      messages: [
+        "You're not alone — most founders don't know their exact runway until it's too late.",
+        "The formula is simple: cash on hand ÷ monthly burn. But the real insight comes from understanding what's driving the burn."
+      ],
+      showPanel: 'cashflow' as PanelType,
+      highlight: 'janfeb' as HighlightType,
+      followUp: {
+        delay: 1500,
+        message: "See January-February? Revenue dipped but expenses stayed flat. That's how 4 months of runway quietly becomes 2. A 13-week cash forecast catches this before it becomes a crisis.",
+        nextPrompts: [
+          { id: 'cta', label: "Build a forecast for us" },
+          { id: 'fix_cash', label: "How do we extend our runway?" },
+        ]
+      }
+    },
+    runway_short: {
+      messages: [
+        "If your gut says it's short, it probably is. The businesses that survive are the ones that face the number head-on.",
+        "There are really only three levers: increase revenue, cut burn, or accelerate collections."
+      ],
+      showPanel: 'cashflow' as PanelType,
+      highlight: 'conversion' as HighlightType,
+      followUp: {
+        delay: 1500,
+        message: "This business has $52K trapped in slow collections — that's an extra month of runway hiding in their AR. Tightening the cash conversion cycle is usually the fastest win.",
+        nextPrompts: [
+          { id: 'ar_problem', label: "We have AR issues too" },
+          { id: 'cta', label: "Help us figure out our runway" },
+        ]
+      }
+    },
     cash: {
       messages: [
         "Cash flow gaps are incredibly common, especially in service businesses with any lag between delivery and collection.",
