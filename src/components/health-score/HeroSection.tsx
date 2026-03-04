@@ -24,11 +24,16 @@ function ScorePreview() {
   ];
 
   return (
-    <div className="relative score-card-float">
+    <div className="relative score-card-float pt-4">
       {/* Animated glow behind card */}
-      <div className="absolute -inset-10 rounded-3xl score-glow" />
+      <div className="absolute -inset-10 top-0 rounded-3xl score-glow" />
 
-      <div className="relative rounded-2xl border border-white/[0.08] bg-[hsl(222_47%_8%/0.9)] backdrop-blur-sm shadow-2xl overflow-hidden">
+      {/* Sample badge — outside the card so it's never clipped */}
+      <div className="absolute -top-0 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider text-slate-400 border border-white/[0.1] bg-[hsl(222_47%_10%)]">
+        Sample Report
+      </div>
+
+      <div className="relative rounded-2xl border border-white/[0.08] bg-[hsl(222_47%_8%/0.9)] backdrop-blur-sm shadow-2xl">
         {/* Main content */}
         <div className="p-7 pb-5">
           <div className="mb-6">
@@ -74,16 +79,11 @@ function ScorePreview() {
         </div>
 
         {/* Bottom status strip */}
-        <div className="px-7 py-3.5 bg-white/[0.03] border-t border-white/[0.06] flex items-center gap-2">
+        <div className="px-7 py-3.5 bg-white/[0.03] border-t border-white/[0.06] rounded-b-2xl flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
           <span className="text-sm text-yellow-500 font-medium">
             Needs Attention
           </span>
-        </div>
-
-        {/* Sample badge */}
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider text-slate-500 border border-white/[0.08] bg-[hsl(222_47%_10%)]">
-          Sample Report
         </div>
       </div>
     </div>
