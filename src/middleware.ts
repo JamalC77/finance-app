@@ -9,12 +9,14 @@ const ALLOWED_ROUTES = [
   '/pricing',
   '/about',
   '/demo',
+  '/chat',
 ];
 
 // Route prefixes that are allowed (for dynamic routes)
 const ALLOWED_PREFIXES: string[] = [
-  '/for/',    // Prospect intelligence pages
-  '/demo/',   // Demo pages (CFO OS, etc.)
+  '/for/',           // Prospect intelligence pages
+  '/demo/',          // Demo pages (CFO OS, etc.)
+  '/health-score/',  // Health score processing + complete pages
 ];
 
 // Static file patterns to allow

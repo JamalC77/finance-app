@@ -98,7 +98,7 @@ export function AboutContent() {
             </nav>
           </div>
           <Link
-            href="/"
+            href="/chat"
             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <span>Talk to us</span>
@@ -249,10 +249,10 @@ export function AboutContent() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/"
+              href="/chat"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
             >
-              Start with a Diagnostic
+              Talk to a CFO
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
