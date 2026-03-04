@@ -109,10 +109,11 @@
   
   .dark .gradient-hero {
     background: linear-gradient(
-      135deg,
-      hsl(224 71% 4%) 0%,
-      hsl(222 47% 6%) 50%,
-      hsl(221 83% 8%) 100%
+      145deg,
+      hsl(225 50% 5%) 0%,
+      hsl(224 55% 8%) 40%,
+      hsl(222 50% 10%) 70%,
+      hsl(225 45% 7%) 100%
     );
   }
   
@@ -388,6 +389,20 @@
   @keyframes heroFadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Rainbow gradient text for hero headline */
+  .hero-gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(280 70% 65%) 0%,
+      hsl(200 80% 60%) 35%,
+      hsl(160 70% 55%) 65%,
+      hsl(140 60% 55%) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
