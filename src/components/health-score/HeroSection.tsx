@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Eye } from "lucide-react";
 import { EmailCaptureForm } from "./EmailCaptureForm";
 
-// Mini score preview for the hero visual
 function ScorePreview() {
   const categories = [
     { name: "Liquidity", score: 62, color: "bg-yellow-500" },
@@ -15,58 +14,53 @@ function ScorePreview() {
   ];
 
   return (
-    <div className="relative mx-auto max-w-sm">
-      {/* Glow behind the card */}
-      <div className="absolute -inset-4 bg-primary/5 rounded-3xl blur-2xl" />
+    <div className="relative">
+      <div className="absolute -inset-6 bg-primary/[0.04] rounded-3xl blur-2xl" />
 
-      <div className="relative p-6 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm">
-        {/* Score + grade */}
-        <div className="flex items-center justify-between mb-5">
+      <div className="relative p-5 rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm shadow-lg">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+            <div className="text-[10px] text-muted-foreground/60 uppercase tracking-widest mb-0.5">
               Health Score
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-yellow-500">54</span>
-              <span className="text-sm text-muted-foreground">/ 100</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl font-bold text-yellow-500">54</span>
+              <span className="text-xs text-muted-foreground/60">/ 100</span>
             </div>
           </div>
-          <div className="px-3 py-1.5 rounded-md border-2 border-yellow-500/40">
-            <span className="text-lg font-bold text-yellow-500">C</span>
+          <div className="px-2.5 py-1 rounded border border-yellow-500/30 bg-yellow-500/5">
+            <span className="text-base font-bold text-yellow-500">C</span>
           </div>
         </div>
 
-        {/* Category bars */}
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {categories.map((cat) => (
-            <div key={cat.name} className="flex items-center gap-3">
-              <div className="w-24 text-xs text-muted-foreground truncate">
+            <div key={cat.name} className="flex items-center gap-2.5">
+              <div className="w-[88px] text-[11px] text-muted-foreground/70 truncate">
                 {cat.name}
               </div>
-              <div className="flex-1 h-2 bg-muted/30 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 bg-muted/20 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full ${cat.color}`}
                   style={{ width: `${cat.score}%` }}
                 />
               </div>
-              <div className="w-6 text-xs text-muted-foreground text-right">
+              <div className="w-5 text-[11px] text-muted-foreground/60 text-right tabular-nums">
                 {cat.score}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Runway badge */}
-        <div className="mt-4 flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
-          <span className="text-xs text-yellow-500 font-medium">
+        <div className="mt-3 pt-3 border-t border-border/30 flex items-center gap-1.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-yellow-500 animate-pulse" />
+          <span className="text-[11px] text-yellow-500 font-medium">
             Needs Attention
           </span>
         </div>
 
-        {/* Sample label */}
-        <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
-          Sample Report
+        <div className="absolute -top-2.5 right-3 px-2 py-0.5 rounded text-[9px] font-medium bg-muted/80 text-muted-foreground border border-border/40">
+          Sample
         </div>
       </div>
     </div>
@@ -75,19 +69,18 @@ function ScorePreview() {
 
 export function HeroSection() {
   return (
-    <section className="relative py-20 md:py-28 px-4 gradient-hero overflow-hidden">
-      {/* Grid pattern */}
+    <section className="relative py-16 md:py-20 px-4 gradient-hero overflow-hidden">
       <div className="absolute inset-0 pattern-grid" />
 
-      <div className="relative container mx-auto max-w-6xl">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: copy + form */}
-          <div className="text-center lg:text-left">
-            <div className="inline-block px-3 py-1 rounded-full border border-border/50 bg-muted/30 text-xs font-medium text-muted-foreground mb-6">
+      <div className="relative container mx-auto max-w-5xl">
+        <div className="grid lg:grid-cols-[1fr_320px] gap-10 lg:gap-14 items-center">
+          {/* Left */}
+          <div>
+            <div className="inline-block px-2.5 py-1 rounded-full border border-border/30 bg-muted/20 text-[11px] font-medium text-muted-foreground/70 mb-5">
               Free for QuickBooks users
             </div>
 
-            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl lg:text-5xl font-medium text-foreground tracking-tight leading-[1.15]">
+            <h1 className="font-[family-name:var(--font-playfair)] text-4xl md:text-5xl font-medium text-foreground tracking-tight leading-[1.15]">
               Is your business
               <br />
               <span className="italic text-foreground/70">
@@ -95,26 +88,26 @@ export function HeroSection() {
               </span>
             </h1>
 
-            <p className="mt-5 text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
+            <p className="mt-4 text-base text-muted-foreground max-w-md">
               Get a 0–100 score across liquidity, receivables, revenue, profitability, and cash runway — delivered to your inbox in minutes.
             </p>
 
-            <div className="mt-8">
+            <div className="mt-7">
               <EmailCaptureForm />
             </div>
 
-            <div className="mt-4 flex justify-center lg:justify-start">
+            <div className="mt-3">
               <Link
                 href="/health-score/example"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border text-foreground font-medium hover:bg-muted/30 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border/50 text-sm text-muted-foreground font-medium hover:text-foreground hover:border-border hover:bg-muted/20 transition-all"
               >
-                <Eye className="h-4 w-4" />
+                <Eye className="h-3.5 w-3.5" />
                 Show Me an Example
               </Link>
             </div>
           </div>
 
-          {/* Right: score preview card */}
+          {/* Right */}
           <div className="hidden lg:block">
             <ScorePreview />
           </div>
