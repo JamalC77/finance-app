@@ -45,12 +45,6 @@ export function HealthScoreLanding() {
               About
             </Link>
             <Link
-              href="/pricing"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
               href="/privacy-policy"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >

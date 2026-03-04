@@ -89,12 +89,6 @@ export function AboutContent() {
               >
                 About Us
               </Link>
-              <Link
-                href="/pricing"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Pricing
-              </Link>
             </nav>
           </div>
           <Link
@@ -182,10 +176,10 @@ export function AboutContent() {
 
           <div className="text-center mt-8">
             <Link
-              href="/pricing"
+              href="/chat"
               className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
             >
-              See our pricing tiers
+              Talk to us about your needs
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -256,10 +250,10 @@ export function AboutContent() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/pricing"
+              href="/"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-border text-foreground font-medium hover:bg-muted transition-colors"
             >
-              View Pricing
+              Get Your Health Score
             </Link>
           </div>
         </div>
@@ -277,12 +271,6 @@ export function AboutContent() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               About
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Pricing
             </Link>
           </div>
         </div>

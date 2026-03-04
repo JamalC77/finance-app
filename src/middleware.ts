@@ -6,7 +6,6 @@ const ALLOWED_ROUTES = [
   '/',
   '/privacy-policy',
   '/eula',
-  '/pricing',
   '/about',
   '/demo',
   '/chat',
