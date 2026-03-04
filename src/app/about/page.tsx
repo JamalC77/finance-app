@@ -2,6 +2,9 @@ import { Metadata } from 'next';
 import { AboutContent } from '@/components/pages/AboutContent';
 import { pageMetadata } from '@/lib/seo.config';
 
+// Force server-render on every request so Netlify never serves stale HTML
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: pageMetadata.about.title,
   description: pageMetadata.about.description,

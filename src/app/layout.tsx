@@ -4,6 +4,10 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 import { siteConfig, organizationSchema, softwareApplicationSchema } from '@/lib/seo.config';
 
+// Force every page to server-render on each request.
+// Prevents Netlify's CDN from serving stale HTML with old JS/CSS hashes.
+export const dynamic = 'force-dynamic';
+
 const inter = Inter({ subsets: ['latin'] });
 const playfair = Playfair_Display({
   subsets: ['latin'],
