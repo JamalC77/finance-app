@@ -24,13 +24,13 @@ export function HeroSection() {
           <EmailCaptureForm />
         </div>
 
-        <div className="mt-6">
+        <div className="mt-4">
           <Link
             href="/health-score/example"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-border text-foreground font-medium hover:bg-muted/30 transition-colors"
           >
             <Eye className="h-4 w-4" />
-            Show me an example
+            Show Me an Example
           </Link>
         </div>
       </div>
